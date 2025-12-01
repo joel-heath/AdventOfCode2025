@@ -1,5 +1,6 @@
 # Advent of Code 2025
 My C# solutions to [Advent of Code 2025](https://adventofcode.com/2025).
+View my (lesser) solutions in Haskell [here](https://github.com/joel-heath/AoC25Haskell).
 
 ## Set-up
 If you'd like to run my solutions on your input, you can clone this repo, and either manually create the file Inputs/Day{n}.txt, or alternatively you can run `dotnet user-secrets set SessionToken your-aoc-session-token`, and your input will be fetched automatically.
@@ -9,7 +10,7 @@ This project is using `.NET 10.0`.
 ## Notes
 Here you can easily navigate each days code and read about how well I think I did.
 
-In previous years I turned my solutions into one-liners for the lols.
+In previous years I turned my solutions into one-liners for the lols (many were atrocious).
 Lazily doing so often resulted in impure methods, and solutions that looked functional but were really just imperative code in disguise. \
 This year, I'm doing so again, in order to convert them into Haskell. (I have to learn Haskell for uni. I would not be doing this according to my own will.) \
 So there's now actually a requirement for the code to be purely functional.
