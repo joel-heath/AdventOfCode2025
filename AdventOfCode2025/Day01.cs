@@ -1,5 +1,4 @@
 using AdventOfCode2025.Utilities;
-using System.Text.RegularExpressions;
 
 namespace AdventOfCode2025;
 
@@ -23,66 +22,33 @@ public class Day01 : IDay
     };
 
     public string SolvePart1(string input)
-    {
-        var lines = input.Split(Environment.NewLine);
-
-        int count = 0;
-        int dial = 50;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i];
-            
-            bool left = line[0] == 'L';
-            int dir = int.Parse(line[1..]);
-
-            if (left)
-                dial -= dir;
-            else
-                dial += dir;
-
-
-            dial = (int)Utils.Mod(dial, 100);
-
-            if (dial == 0)
-                count++;
-        }
-
-
-        return $"{count}";
-    }
+        => $"{input.Split(Environment.NewLine)
+                .Select(l => (Polarity: l[0] == 'L' ? -1 : 1, Distance: int.Parse(l[1..])))
+                .Aggregate(
+                    (Dial: 50, Count: 0),
+                    (acc, curr) =>
+                    {
+                        int newDial = ((int)Utils.Mod(acc.Dial + curr.Polarity * curr.Distance, 100));
+                        return (newDial, acc.Count + (newDial == 0 ? 1 : 0));
+                    })
+                .Count}";
 
     public string SolvePart2(string input)
-    {
-        var lines = input.Split(Environment.NewLine);
+        => $"{input.Split(Environment.NewLine)
+                .Select(l => (Polarity: l[0] == 'L' ? -1 : 1, Distance: int.Parse(l[1..])))
+                .Aggregate(
+                    (Dial: 50, Count: 0),
+                    (acc, curr) =>
+                    {
+                        int newDial = acc.Dial + curr.Polarity * curr.Distance;
+                        int increment = 
+                            curr.Polarity == 1 && newDial >= 100
+                                ? newDial / 100
+                                : curr.Polarity == -1 && newDial <= 0
+                                ? (acc.Dial == 0 ? 0 : 1) + -newDial / 100
+                                : 0;
 
-        int count = 0;
-        int dial = 50;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i];
-
-            bool left = line[0] == 'L';
-            int dir = int.Parse(line[1..]);
-
-            bool dialStartedAtZero = dial == 0;
-            
-
-            if (left)
-            {
-                dial -= dir;
-                if (dial <= 0)
-                    count += (dialStartedAtZero ? 0 : 1) + -dial / 100;
-            }
-            else
-            {
-                dial += dir;
-                if (dial >= 100)
-                    count += dial / 100;
-            }
-
-            dial = (int)Utils.Mod(dial, 100);
-        }
-
-        return $"{count}";
-    }
+                        return ((int)Utils.Mod(newDial, 100), acc.Count + increment);
+                    })
+                .Count}";
 }
