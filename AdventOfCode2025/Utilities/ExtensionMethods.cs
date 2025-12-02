@@ -2,6 +2,69 @@
 
 public static class ExtensionMethods
 {
+    public static bool CountLessThan<T>(this IEnumerable<T> source, int threshold)
+    {
+        if (threshold < 0) return false;
+        using var enumerator = source.GetEnumerator();
+        for (int count = 1; enumerator.MoveNext(); count++)
+        {
+            if (count >= threshold)
+                return false;
+        }
+        return true;
+    }
+
+    public static bool CountLessThanOrEqual<T>(this IEnumerable<T> source, int threshold)
+    {
+        if (threshold < 0) return false;
+        using var enumerator = source.GetEnumerator();
+        for (int count = 1; enumerator.MoveNext(); count++)
+        {
+            if (count > threshold)
+                return false;
+        }
+        return true;
+    }
+
+    public static bool CountGreaterThan<T>(this IEnumerable<T> source, int threshold)
+    {
+        if (threshold < 0) return true;
+        using var enumerator = source.GetEnumerator();
+        for (int count = 1; enumerator.MoveNext(); count++)
+        {
+            if (count > threshold)
+                return true;
+        }
+        return false;
+    }
+
+    public static bool CountGreaterThanOrEqual<T>(this IEnumerable<T> source, int threshold)
+    {
+        if (threshold <= 0) return true;
+        using var enumerator = source.GetEnumerator();
+        for (int count = 1; enumerator.MoveNext(); count++)
+        {
+            if (count >= threshold)
+                return true;
+        }
+        return false;
+    }
+
+    public static bool CountEquals<T>(this IEnumerable<T> source, int target)
+    {
+        if (target < 0) return false;
+        using var enumerator = source.GetEnumerator();
+        int count = 0;
+        while (enumerator.MoveNext())
+        {
+            count++;
+            if (count > target)
+                return false;
+        }
+        return count == target;
+    }
+
+
     public static Point Sum(this IEnumerable<Point> source)
     {
         long x = 0, y = 0;

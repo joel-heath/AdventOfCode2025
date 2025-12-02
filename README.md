@@ -26,7 +26,7 @@ So there's now actually a requirement for the code to be purely functional.
 | **Day** | **Verbosity** | **Notes** |
 |:---:|:---:|:---:|
 | [1](AdventOfCode2025/Day01.cs) | 🟢 | For part two, the simplest of code would just create a range and iterate, this would also work well in Haskell but is unnecessarily inefficient. Instead, I took a better approach: divide by 100 before wrapping, but beware off-by-one errors!! 😱⚠️🐞🚨🤯🔢➕1️⃣👽 |
-| [2](AdventOfCode2025/Day02.cs) | ⚫ |  |
+| [2](AdventOfCode2025/Day02.cs) | 🟢 | Today's problem prompted me to create new extension methods, `.CountLessThan(k)` and `.CountGreaterThanOrEqual(k)` etc because `!list.Skip(k).Any()` is hard to read in my opinion. |
 | [3](AdventOfCode2025/Day03.cs) | ⚫ |  |
 | [4](AdventOfCode2025/Day04.cs) | ⚫ |  |
 | [5](AdventOfCode2025/Day05.cs) | ⚫ |  |
