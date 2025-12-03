@@ -22,7 +22,7 @@ public class Day01 : IDay
     };
 
     public string SolvePart1(string input)
-        => $"{input.Split(Environment.NewLine)
+        => $"{input.Lines()
                 .Select(l => (Polarity: l[0] == 'L' ? -1 : 1, Distance: int.Parse(l[1..])))
                 .Aggregate(
                     (Dial: 50, Count: 0),
@@ -34,7 +34,7 @@ public class Day01 : IDay
                 .Count}";
 
     public string SolvePart2(string input)
-        => $"{input.Split(Environment.NewLine)
+        => $"{input.Lines()
                 .Select(l => (Polarity: l[0] == 'L' ? -1 : 1, Distance: int.Parse(l[1..])))
                 .Aggregate(
                     (Dial: 50, Count: 0),

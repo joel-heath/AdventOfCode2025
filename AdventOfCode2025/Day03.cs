@@ -24,13 +24,14 @@ public class Day03 : IDay
         return max * (long)Math.Pow(10, k - 1) + MaxJolts(numbers[(firstOccurance + 1)..], k - 1);
     }
 
+    private static long Solve(string input, int k)
+        => input.Lines()
+                .Select(line => line.Select(c => c - '0').ToArray())
+                .Sum(nums => MaxJolts(nums, k));
+
     public string SolvePart1(string input)
-        => $"{input.Split(Environment.NewLine)
-            .Select(line => line.Select(c => c - '0').ToArray())
-            .Sum(nums => MaxJolts(nums, 2))}";
+        => $"{Solve(input, 2)}";
 
     public string SolvePart2(string input)
-        => $"{input.Split(Environment.NewLine)
-            .Select(line => line.Select(c => c - '0').ToArray())
-            .Sum(nums => MaxJolts(nums, 12))}";
+        => $"{Solve(input, 12)}";
 }

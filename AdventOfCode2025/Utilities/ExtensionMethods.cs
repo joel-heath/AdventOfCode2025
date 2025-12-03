@@ -2,6 +2,9 @@
 
 public static class ExtensionMethods
 {
+    public static string[] Lines(this string source, StringSplitOptions options = StringSplitOptions.None)
+        => source.Split(Environment.NewLine, options);
+
     public static bool CountLessThan<T>(this IEnumerable<T> source, int threshold)
     {
         if (threshold < 0) return false;

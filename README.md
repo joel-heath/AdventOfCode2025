@@ -17,7 +17,7 @@ So there's now actually a requirement for the code to be purely functional.
 
 ### Legend
 🟣 The quintessential one-liner. \
-🟢 One-liner but with some functions that involve only variable declarations, then a one-line return. In a functional language these would be `let ... in ...` but C# doesn't have such syntax. \
+🟢 Functions are allowed 1. base cases, 2. variable initialisations, and 3. return line. \
 🟡 Short, succinct code. \
 🟠 Average solution that is unreduced. \
 🔴 A poorer solution than most out there. \
@@ -27,7 +27,7 @@ So there's now actually a requirement for the code to be purely functional.
 |:---:|:---:|:---:|
 | [1](AdventOfCode2025/Day01.cs) | 🟢 | For part two, the simplest of code would just create a range and iterate, this would also work well in Haskell but is unnecessarily inefficient. Instead, I took a better approach: divide by 100 before wrapping, but beware off-by-one errors!! 😱⚠️🐞🚨🤯🔢➕1️⃣👽 |
 | [2](AdventOfCode2025/Day02.cs) | 🟢 | Today's problem prompted me to create new extension methods, `.CountLessThan(k)` and `.CountGreaterThanOrEqual(k)` etc because `!list.Skip(k).Any()` is hard to read in my opinion. |
-| [3](AdventOfCode2025/Day03.cs) | ⚫ |  |
+| [3](AdventOfCode2025/Day03.cs) | 🟢 | Not much to say today except "a recursive solution on day three!?!?". It'll lend itself nicely to a Haskell conversion (except for the `.SkipLast(n)` calls, not the most idiomatic but oh well). |
 | [4](AdventOfCode2025/Day04.cs) | ⚫ |  |
 | [5](AdventOfCode2025/Day05.cs) | ⚫ |  |
 | [6](AdventOfCode2025/Day06.cs) | ⚫ |  |
