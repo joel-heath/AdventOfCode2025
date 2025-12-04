@@ -28,7 +28,7 @@ So there's now actually a requirement for the code to be purely functional.
 | [1](AdventOfCode2025/Day01.cs) | 🟢 | For part two, the simplest of code would just create a range and iterate, this would also work well in Haskell but is unnecessarily inefficient. Instead, I took a better approach: divide by 100 before wrapping, but beware off-by-one errors!! 😱⚠️🐞🚨🤯🔢➕1️⃣👽 |
 | [2](AdventOfCode2025/Day02.cs) | 🟢 | Today's problem prompted me to create new extension methods, `.CountLessThan(k)` and `.CountGreaterThanOrEqual(k)` etc because `!list.Skip(k).Any()` is hard to read in my opinion. |
 | [3](AdventOfCode2025/Day03.cs) | 🟢 | Not much to say today except "a recursive solution on day three!?!?". It'll lend itself nicely to a Haskell conversion (except for the `.SkipLast(n)` calls, not the most idiomatic but oh well). |
-| [4](AdventOfCode2025/Day04.cs) | ⚫ |  |
+| [4](AdventOfCode2025/Day04.cs) | 🟢 | Today's part two was a monster to turn functional, I had to create new constructors for my `Grid<T>` class, and a new extension method `.SelectAggregate()`, which produces a new list and reutrns an accumulator threaded through. |
 | [5](AdventOfCode2025/Day05.cs) | ⚫ |  |
 | [6](AdventOfCode2025/Day06.cs) | ⚫ |  |
 | [7](AdventOfCode2025/Day07.cs) | ⚫ |  |

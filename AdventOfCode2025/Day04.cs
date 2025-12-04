@@ -1,4 +1,5 @@
 using AdventOfCode2025.Utilities;
+using System.Numerics;
 
 namespace AdventOfCode2025;
 
@@ -22,34 +23,26 @@ public class Day04 : IDay
                .Count(ps => ps.Count(adj => grid[adj] == '@') < 4);
 
     private static int RemoveAll(Grid<char> grid)
-    {
-        int changed, total = 0;
-        do
-        {
-            changed = 0;
-            var newGrid = grid.ToGrid();
-
-            foreach (Point p in grid.AllPositions())
-            {
-                char c = grid[p];
-                if (c == '@')
+        => Utils.EnumerateForever()
+            .AggregateWhile(
+                (grid, changed: 0, total: 0),
+                (state, _) =>
                 {
-                    if (grid.Adjacents(p, includeDiagonals: true)
-                    .Count(adj => grid[adj] == '@') < 4)
-                    {
-                        changed++;
-                        newGrid[p] = '.';
-                    }
-                }
-            }
+                    (int rollsMoved, List<char> newGrid) = state.grid
+                        .AllPositions()
+                        .Select(p => (p, c: state.grid[p]))
+                        .SelectAggregate(0,
+                            (acc, t) =>
+                            {
+                                bool moveable = t.c == '@' && state.grid.Adjacents(t.p, includeDiagonals: true).Count(adj => state.grid[adj] == '@') < 4;
 
-            total += changed;
-            grid = newGrid;
-        }
-        while (changed > 0);
+                                return (acc + (moveable ? 1 : 0), moveable ? '.' : t.c);
+                            });
 
-        return total;
-    }
+                    return (new Grid<char>(grid.Width, grid.Height, newGrid), rollsMoved, state.total + rollsMoved);
+                },
+                state => state.changed > 0
+            ).total;
 
     public string SolvePart1(string input)
         => $"{CountAccessible(Grid<char>.FromString(input))}";

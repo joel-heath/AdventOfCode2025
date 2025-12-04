@@ -242,19 +242,26 @@ public static class ExtensionMethods
         using var e = src.GetEnumerator();
         if (!e.MoveNext())
             throw new Exception("At least one element required by AggregateWhile");
+
         var ans = e.Current;
+
         while (whileFn(ans) && e.MoveNext())
             ans = accumFn(ans, e.Current);
+
         return ans;
     }
 
     public static TAccum AggregateWhile<TAccum, TSource>(this IEnumerable<TSource> src, TAccum seed, Func<TAccum, TSource, TAccum> accumFn, Predicate<TAccum> whileFn)
     {
         using var e = src.GetEnumerator();
-        if (!e.MoveNext()) return seed;
-        var ans = accumFn(seed, e.Current);
+        if (!e.MoveNext())
+            return seed;
+
+        TAccum? ans = accumFn(seed, e.Current);
+
         while (whileFn(ans) && e.MoveNext())
             ans = accumFn(ans, e.Current);
+
         return ans;
     }
 
@@ -311,6 +318,23 @@ public static class ExtensionMethods
             i = (i + 1) % windowWidth;
             yield return [.. previousN[i..], .. previousN[..i]];
         }
+    }
+
+    // Haskell's mapAccumL, F#'s mapFold
+    public static (TAcc finalAcc, List<TOut> mapped) SelectAggregate<TIn, TOut, TAcc>(
+        this IEnumerable<TIn> source, TAcc initial, Func<TAcc, TIn, (TAcc acc, TOut value)> folder)
+    {
+        TAcc acc = initial;
+        List<TOut> results = [];
+
+        foreach (var item in source)
+        {
+            var (newAcc, mappedValue) = folder(acc, item);
+            acc = newAcc;
+            results.Add(mappedValue);
+        }
+
+        return (acc, results);
     }
 
     private static IEnumerable<T> GenerateIterator<T>(Func<int, T> generator, int count)
