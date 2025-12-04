@@ -19,9 +19,9 @@ public class Day03 : IDay
         if (k == 0) return 0;
 
         int max = numbers.SkipLast(k - 1).Max();
-        int firstOccurance = numbers.Select((x, i) => (x, i)).First(t => t.x == max).i;
+        int firstOccurrence = numbers.Select((x, i) => (x, i)).First(t => t.x == max).i;
         
-        return max * (long)Math.Pow(10, k - 1) + MaxJolts(numbers[(firstOccurance + 1)..], k - 1);
+        return max * (long)Math.Pow(10, k - 1) + MaxJolts(numbers[(firstOccurrence + 1)..], k - 1);
     }
 
     private static long Solve(string input, int k)

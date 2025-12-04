@@ -39,6 +39,16 @@ public class Grid<T>(int x, int y)
             }
         }
     }
+    public Grid(T[,] contents, bool transpose = true) : this(transpose ? contents.GetLength(0) : contents.GetLength(1), transpose ? contents.GetLength(1) : contents.GetLength(0))
+    {
+        for (int r = 0; r < Height; r++)
+        {
+            for (int c = 0; c < Width; c++)
+            {
+                points[c, r] = transpose ? contents[r,c] : contents[c,r];
+            }
+        }
+    }
     public Grid(int width, int height, IEnumerable<T> contents, bool transpose = false) : this(width, height)
     {
         var enumerator = contents.GetEnumerator();
@@ -222,6 +232,9 @@ public class Grid<T>(int x, int y)
         }
         return s.ToString();
     }
+
+    public Grid<T> ToGrid()
+        => new(points, transpose: false);
 }
 
 public struct Point(long x, long y)
