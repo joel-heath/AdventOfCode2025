@@ -1,4 +1,5 @@
 using AdventOfCode2025.Utilities;
+using System;
 
 namespace AdventOfCode2025;
 
@@ -14,46 +15,47 @@ public class Day05 : IDay
         { "3-5\r\n10-14\r\n16-20\r\n12-18\r\n\r\n1\r\n5\r\n8\r\n11\r\n17\r\n32", "14" }
     };
 
-    public string SolvePart1(string input)
+    public static (int Increment, long End) ExtendRange(List<(long Start, long End)> ranges, int i, long currentStart, long currentEnd)
     {
-        var parts = input.Split(Environment.NewLine + Environment.NewLine);
-        var ranges = parts[0].Lines()
-                             .Select(line => line.Split('-'))
-                             .Select(tokens => (start: long.Parse(tokens[0]), end: long.Parse(tokens[1])))
-                             .ToList();
+        if (i >= ranges.Count)
+            return (0, currentEnd);
 
-        var available = parts[1].Lines()
-                             .Select(long.Parse)
-                             .ToList();
+        (long start, long end) = ranges[i];
 
-        return $"{available.Count(num => ranges.Any(range => range.start <= num && num <= range.end))}";
+        if (start > currentEnd)
+            return (0, currentEnd);
+
+        (int inc, long newEnd) = ExtendRange(ranges, i + 1, currentStart, Math.Max(currentEnd, end));
+
+        return (inc + 1, newEnd);
     }
 
-    public static IEnumerable<(long Start, long End)> MergeRanges(List<(long Start, long End)> ranges)
+    public static IEnumerable<(long Start, long End)> SimplifyRanges(List<(long Start, long End)> ranges, int i = 0)
     {
-        for (int i = 0; i < ranges.Count; i++)
-        {
-            (long start, long end) = ranges[i];
-            
-            while (i+1 < ranges.Count && ranges[i+1].Start <= end)
-            {
-                i++;
-                end = Math.Max(end, ranges[i].End);
-            }
+        if (i >= ranges.Count)
+            return [];
 
-            yield return (start, end);
-        }
+        (long start, long end) = ranges[i];
+        (int increment, long newEnd) = ExtendRange(ranges, i + 1, start, end);
+
+        return [(start, newEnd), .. SimplifyRanges(ranges, i + increment + 1)];
+    }
+
+    public string SolvePart1(string input)
+    {
+        var (freshIDs, availableIDs) = input.Split(Environment.NewLine + Environment.NewLine).Select(h => h.Lines());
+        var ranges = freshIDs.Select(line => line.Split('-'))
+                             .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))
+                             .ToList();
+
+        return $"{availableIDs.Select(long.Parse).Count(num => ranges.Any(range => range.Start <= num && num <= range.End))}";
     }
 
     public string SolvePart2(string input)
-    {
-        var parts = input.Split(Environment.NewLine + Environment.NewLine);
-        var ranges = parts[0].Lines()
-                             .Select(line => line.Split('-'))
-                             .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))
-                             .OrderBy(range => range.Start)
-                             .ToList();
-
-        return $"{MergeRanges(ranges).Sum(r => r.End - r.Start + 1)}";
-    }
+        => $"{SimplifyRanges([..input.Split(Environment.NewLine + Environment.NewLine)[0]
+                .Lines()
+                .Select(line => line.Split('-'))
+                .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))
+                .OrderBy(range => range.Start)])
+            .Sum(r => r.End - r.Start + 1)}";
 }
