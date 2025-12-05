@@ -14,23 +14,14 @@ public class Day02 : IDay
         { "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124", "4174379265" },
     };
 
-    private bool HalvesSame(long number)
-    {
-        string n = number.ToString();
-        int half = n.Length / 2;
+    private static bool HalvesSame(string n)
+        => n.Length % 2 == 0 && n[..(n.Length / 2)] == n[(n.Length / 2)..];
 
-        return n.Length % 2 == 0 && n[..half] == n[half..];
-    }
-
-    private bool RepeatedSubstring(long number)
-    {
-        string n = number.ToString();
-
-        return Enumerable.Range(1, n.Length / 2)
+    private static bool RepeatedSubstring(string n)
+        => Enumerable.Range(1, n.Length / 2)
             .Any(chunkSize => n.Chunk(chunkSize)
                 .Select(x => new string(x))
                 .Distinct().CountLessThanOrEqual(1));
-    }
 
     private static IEnumerable<long> Parse(string input)
         => input.Split(',')
@@ -39,9 +30,9 @@ public class Day02 : IDay
             .SelectMany(r => Utils.Range(r.Start, r.End - r.Start + 1));
 
     public string SolvePart1(string input)
-       => $"{Parse(input).Where(HalvesSame).Sum()}";
+       => $"{Parse(input).Where(n => HalvesSame($"{n}")).Sum()}";
 
     public string SolvePart2(string input)
-       => $"{Parse(input).Where(RepeatedSubstring).Sum()}";
+       => $"{Parse(input).Where(n => RepeatedSubstring($"{n}")).Sum()}";
 
 }

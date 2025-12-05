@@ -1,5 +1,4 @@
 using AdventOfCode2025.Utilities;
-using System;
 
 namespace AdventOfCode2025;
 
@@ -15,30 +14,17 @@ public class Day05 : IDay
         { "3-5\r\n10-14\r\n16-20\r\n12-18\r\n\r\n1\r\n5\r\n8\r\n11\r\n17\r\n32", "14" }
     };
 
-    public static (int Increment, long End) ExtendRange(List<(long Start, long End)> ranges, int i, long currentStart, long currentEnd)
+    public static IEnumerable<(long Start, long End)> MergeRanges(List<(long Start, long End)> ranges)
     {
-        if (i >= ranges.Count)
-            return (0, currentEnd);
+        for (int i = 0; i < ranges.Count; i++)
+        {
+            (long start, long end) = ranges[i];
 
-        (long start, long end) = ranges[i];
+            for (; i + 1 < ranges.Count && ranges[i + 1].Start <= end; i++)
+                end = Math.Max(end, ranges[i + 1].End);
 
-        if (start > currentEnd)
-            return (0, currentEnd);
-
-        (int inc, long newEnd) = ExtendRange(ranges, i + 1, currentStart, Math.Max(currentEnd, end));
-
-        return (inc + 1, newEnd);
-    }
-
-    public static IEnumerable<(long Start, long End)> SimplifyRanges(List<(long Start, long End)> ranges, int i = 0)
-    {
-        if (i >= ranges.Count)
-            return [];
-
-        (long start, long end) = ranges[i];
-        (int increment, long newEnd) = ExtendRange(ranges, i + 1, start, end);
-
-        return [(start, newEnd), .. SimplifyRanges(ranges, i + increment + 1)];
+            yield return (start, end);
+        }
     }
 
     public string SolvePart1(string input)
@@ -52,7 +38,7 @@ public class Day05 : IDay
     }
 
     public string SolvePart2(string input)
-        => $"{SimplifyRanges([..input.Split(Environment.NewLine + Environment.NewLine)[0]
+        => $"{MergeRanges([..input.Split(Environment.NewLine + Environment.NewLine)[0]
                 .Lines()
                 .Select(line => line.Split('-'))
                 .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))

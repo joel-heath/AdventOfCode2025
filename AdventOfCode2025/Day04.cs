@@ -1,5 +1,4 @@
 using AdventOfCode2025.Utilities;
-using System.Numerics;
 
 namespace AdventOfCode2025;
 
@@ -33,11 +32,8 @@ public class Day04 : IDay
                         .Select(p => (p, c: state.grid[p]))
                         .SelectAggregate(0,
                             (acc, t) =>
-                            {
-                                bool moveable = t.c == '@' && state.grid.Adjacents(t.p, includeDiagonals: true).Count(adj => state.grid[adj] == '@') < 4;
-
-                                return moveable ? (acc + 1, '.') : (acc, t.c);
-                            });
+                                t.c == '@' && state.grid.Adjacents(t.p, includeDiagonals: true).Count(adj => state.grid[adj] == '@') < 4
+                                    ? (acc + 1, '.') : (acc, t.c));
 
                     return (new Grid<char>(grid.Width, grid.Height, newGrid), rollsMoved, state.total + rollsMoved);
                 },

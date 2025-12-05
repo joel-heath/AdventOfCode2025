@@ -11,25 +11,32 @@ This project is using `.NET 10.0`.
 Here you can easily navigate each days code and read about how well I think I did.
 
 In previous years I turned my solutions into one-liners for the lols (many were atrocious).
-Lazily doing so often resulted in impure methods, and solutions that looked functional but were really just imperative code in disguise. \
-This year, I'm doing so again, in order to convert them into Haskell. (I have to learn Haskell for uni. I would not be doing this according to my own will.) \
-So there's now actually a requirement for the code to be purely functional.
+Lazily doing so often resulted in impure methods, and solutions that looked functional but were really just imperative code in disguise.
+
+But not to fear! This year, I need to learn Haskell for uni, so after solving each problem in C#, I will turn it functional then convert the code into Haskell.
+Hopefully, for the most part, this will make my C# code more succinct and clear, however it may end up worse in some cases, so this year, we shall have a NEW AND IMPROVED LEGEND:
 
 ### Legend
-🟣 The quintessential one-liner. \
-🟢 Functions are allowed 1. base cases, 2. variable initialisations, and 3. return line. \
-🟡 Fully functional solution that is a bit all-over-the-place. \
-🟠 Not fully functional. Short, succinct, imperitive code. \
-🔴 A poorer solution than most out there. \
 ⚫ Unsolved (probably because the problem isn't out yet, or I forgot to push).
+
+#### Purely functional solutions
+🟣 The quintessential one-liner. \
+🟢 Functions are allowed: 1. base cases 2. variable initialisations 3. return line. \
+🟡 Fully functional solution that is a bit all-over-the-place.
+
+#### Multi-paradigm solutions
+🟪 The quintessential multi-paradigm solution. Clear reduced code that is functional where possible with simplified iterative parts. \
+🟩 Short, succinct code \
+🟨 Unreduced code, but not largely inefficient. \
+🟥 A poorer solution than most out there. (Brute forces when there's no need, hard-coded to my input etc.)
 
 | **Day** | **Verbosity** | **Notes** |
 |:---:|:---:|:---:|
 | [1](AdventOfCode2025/Day01.cs) | 🟢 | For part two, the simplest of code would just create a range and iterate, this would also work well in Haskell but is unnecessarily inefficient. Instead, I took a better approach: divide by 100 before wrapping, but beware off-by-one errors!! 😱⚠️🐞🚨🤯🔢➕1️⃣👽 |
-| [2](AdventOfCode2025/Day02.cs) | 🟢 | Today's problem prompted me to create new extension methods, `.CountLessThan(k)` and `.CountGreaterThanOrEqual(k)` etc because `!list.Skip(k).Any()` is hard to read in my opinion. |
+| [2](AdventOfCode2025/Day02.cs) | 🟣 | Today's problem prompted me to create new extension methods, `.CountLessThan(k)` and `.CountGreaterThanOrEqual(k)` etc because `!list.Skip(k).Any()` is hard to read in my opinion. |
 | [3](AdventOfCode2025/Day03.cs) | 🟢 | Not much to say today except "a recursive solution on day three!?!?". It'll lend itself nicely to a Haskell conversion (except for the `.SkipLast(n)` calls, not the most idiomatic but oh well). |
 | [4](AdventOfCode2025/Day04.cs) | 🟢 | Today's part two was a monster to turn functional, I had to create new constructors for my `Grid<T>` class, and a new extension method `.SelectAggregate()`, which produces a new list and reutrns an accumulator threaded through. |
-| [5](AdventOfCode2025/Day05.cs) | 🟡 | Today's part 2 gave [déjà vu](https://github.com/joel-heath/AdventOfCode2022/blob/master/AdventOfCode2022/Day15.cs), rather than copying my old code I came up with a new solution which was thankfully much faster to write and is O(nlogn) rather than O(n^2). With regards to the "verbosity score", this one could be seen as green, I gave it yellow because it has variable declarations and return cases interwoven. |
+| [5](AdventOfCode2025/Day05.cs) | 🟪 | [Déjà vu on part 2…](https://github.com/joel-heath/AdventOfCode2022/blob/master/AdventOfCode2022/Day15.cs) I initially converted today's into functional code, but admittedly it looked pretty terrible in C# [(it's cleaner in Haskell though!)](https://github.com/joel-heath/AoC25Haskell/blob/main/Day5.hs), so I've stuck with my original imperitive solution. It merges ranges in average time `O(nlogn)` by sorting then merging in one `O(n)` passthrough. |
 | [6](AdventOfCode2025/Day06.cs) | ⚫ |  |
 | [7](AdventOfCode2025/Day07.cs) | ⚫ |  |
 | [8](AdventOfCode2025/Day08.cs) | ⚫ |  |
