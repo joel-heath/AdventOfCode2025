@@ -36,7 +36,7 @@ public class Day04 : IDay
                             {
                                 bool moveable = t.c == '@' && state.grid.Adjacents(t.p, includeDiagonals: true).Count(adj => state.grid[adj] == '@') < 4;
 
-                                return (acc + (moveable ? 1 : 0), moveable ? '.' : t.c);
+                                return moveable ? (acc + 1, '.') : (acc, t.c);
                             });
 
                     return (new Grid<char>(grid.Width, grid.Height, newGrid), rollsMoved, state.total + rollsMoved);
