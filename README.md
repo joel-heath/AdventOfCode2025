@@ -37,16 +37,3 @@ So there's now actually a requirement for the code to be purely functional.
 | [10](AdventOfCode2025/Day10.cs) | ⚫ |  |
 | [11](AdventOfCode2025/Day11.cs) | ⚫ |  |
 | [12](AdventOfCode2025/Day12.cs) | ⚫ |  |
-| [13](AdventOfCode2025/Day13.cs) | ⚫ |  |
-| [14](AdventOfCode2025/Day14.cs) | ⚫ |  |
-| [15](AdventOfCode2025/Day15.cs) | ⚫ |  |
-| [16](AdventOfCode2025/Day16.cs) | ⚫ |  |
-| [17](AdventOfCode2025/Day17.cs) | ⚫ |  |
-| [18](AdventOfCode2025/Day18.cs) | ⚫ |  |
-| [19](AdventOfCode2025/Day19.cs) | ⚫ |  |
-| [20](AdventOfCode2025/Day20.cs) | ⚫ |  |
-| [21](AdventOfCode2025/Day21.cs) | ⚫ |  |
-| [22](AdventOfCode2025/Day22.cs) | ⚫ |  |
-| [23](AdventOfCode2025/Day23.cs) | ⚫ |  |
-| [24](AdventOfCode2025/Day24.cs) | ⚫ |  |
-| [25](AdventOfCode2025/Day25.cs) | ⚫ |  |
