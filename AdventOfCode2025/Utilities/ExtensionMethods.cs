@@ -1,9 +1,64 @@
-﻿namespace AdventOfCode2025.Utilities;
+﻿using System.Text.RegularExpressions;
+
+namespace AdventOfCode2025.Utilities;
 
 public static class ExtensionMethods
 {
     public static string[] Lines(this string source, StringSplitOptions options = StringSplitOptions.None)
         => source.Split(Environment.NewLine, options);
+
+    public static string[] Groups(this string source, StringSplitOptions options = StringSplitOptions.None)
+        => source.Split(Environment.NewLine + Environment.NewLine, options);
+
+    public static string[][] GroupsLines(this string source, StringSplitOptions options = StringSplitOptions.None)
+        => [..source.Split(Environment.NewLine + Environment.NewLine, options)
+                    .Select(group => group.Split(Environment.NewLine))];
+
+    /// <summary>
+    /// <c>SplitBy(["a", "b", "c", "", "d", "", "e", "f", "", "h"], "") -> [["a", "b", "c"], ["d"], ["e", "f"], ["h"]]</c>
+    /// </summary>
+    /// 
+    public static IEnumerable<List<T>> SplitBy<T>(this IEnumerable<T> source, T delimiter) where T : IEquatable<T>
+    {
+        List<T> current = [];
+
+        foreach (T item in source)
+        {
+            if (item is not null && item.Equals(delimiter))
+            {
+                if (current.Count > 0)
+                {
+                    yield return current;
+                    current = [];
+                }
+            }
+            else current.Add(item!);
+        }
+
+        if (current.Count > 0)
+            yield return current;
+    }
+
+    public static IEnumerable<List<string>> SplitBy(this IEnumerable<string> source, Regex delim)
+    {
+        List<string> current = [];
+
+        foreach (string item in source)
+        {
+            if (delim.IsMatch(item))
+            {
+                if (current.Count > 0)
+                {
+                    yield return current;
+                    current.Clear();
+                }
+            }
+            else current.Add(item);
+        }
+
+        if (current.Count > 0)
+            yield return current;
+    }
 
     public static bool CountLessThan<T>(this IEnumerable<T> source, int threshold)
     {
@@ -205,19 +260,6 @@ public static class ExtensionMethods
         }
         yield return (curr, count);
     }
-
-    public static T[][] Transpose<T>(this IEnumerable<IEnumerable<T>> source)
-        => source.SelectMany(inner => inner.Select((item, index) => (item, index)))
-            .GroupBy(i => i.index, i => i.item)
-            .Select(g => g.ToArray()).ToArray();
-
-    public static T[][] RotateAntiClockwise<T>(this IEnumerable<IEnumerable<T>> source)
-    {
-        T[][] transposed = source.Transpose();
-        Array.Reverse(transposed);
-        return transposed;
-    }
-
 
     public static IEnumerable<TAcc> Scan<TSource, TAcc>(this IEnumerable<TSource> source, TAcc seed, Func<TAcc, TSource, TAcc> func)
     {

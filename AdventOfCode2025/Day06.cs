@@ -18,20 +18,21 @@ public class Day06 : IDay
         => add ? nums.Sum() : nums.Aggregate(1L, (a, b) => a * b);
 
     public string SolvePart1(string input)
-        => $"{input.Split(Environment.NewLine)
-                .Select(line => line.Split(" ", StringSplitOptions.RemoveEmptyEntries))
-                .Transpose().Select(equation =>
-                    EvaluateProblem(equation[^1] == "+", equation[..^1].Select(long.Parse)))
-                .Sum()}";
+        => $"{input.Lines()
+                   .Select(line => line.Split(" ", StringSplitOptions.RemoveEmptyEntries))
+                   .Transpose().ToArray2()
+                   .Select(lines => 
+                       (Operator: lines[^1] == "+",
+                        Operands: lines[..^1].Select(long.Parse)))
+                   .Sum(problem => EvaluateProblem(problem.Operator, problem.Operands))}";
 
     public string SolvePart2(string input)
-        => $"{string.Join(Environment.NewLine,
-                input.Split(Environment.NewLine)
-                    .RotateAntiClockwise()
-                    .Select(line => new string(line).Trim()))
-            .Split(Environment.NewLine + Environment.NewLine)
-            .Select(problem => problem.Split(Environment.NewLine))
-            .Select(equation =>
-                EvaluateProblem(equation[^1][^1] == '+', equation.Select(c => long.Parse(c.Trim('+', '*')))))
-            .Sum()}";
+        => $"{input.Lines()
+                   .RotateAnticlockwise()
+                   .Select(line => string.Concat(line).Trim())
+                   .SplitBy("")
+                   .Select(lines =>
+                       (Operator: lines[^1][^1] == '+',
+                        Operands: lines.Select(c => long.Parse(c.Trim('+', '*')))))
+                   .Sum(problem => EvaluateProblem(problem.Operator, problem.Operands))}";
 }

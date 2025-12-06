@@ -29,7 +29,7 @@ public class Day05 : IDay
 
     public string SolvePart1(string input)
     {
-        var (freshIDs, availableIDs) = input.Split(Environment.NewLine + Environment.NewLine).Select(h => h.Lines());
+        var (freshIDs, availableIDs) = input.GroupsLines();
         var ranges = freshIDs.Select(line => line.Split('-'))
                              .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))
                              .ToList();
@@ -38,8 +38,7 @@ public class Day05 : IDay
     }
 
     public string SolvePart2(string input)
-        => $"{MergeRanges([..input.Split(Environment.NewLine + Environment.NewLine)[0]
-                .Lines()
+        => $"{MergeRanges([..input.GroupsLines()[0]
                 .Select(line => line.Split('-'))
                 .Select(tokens => (Start: long.Parse(tokens[0]), End: long.Parse(tokens[1])))
                 .OrderBy(range => range.Start)])
