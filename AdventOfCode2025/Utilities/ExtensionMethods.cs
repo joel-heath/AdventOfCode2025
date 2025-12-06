@@ -211,6 +211,13 @@ public static class ExtensionMethods
             .GroupBy(i => i.index, i => i.item)
             .Select(g => g.ToArray()).ToArray();
 
+    public static T[][] RotateAntiClockwise<T>(this IEnumerable<IEnumerable<T>> source)
+    {
+        T[][] transposed = source.Transpose();
+        Array.Reverse(transposed);
+        return transposed;
+    }
+
 
     public static IEnumerable<TAcc> Scan<TSource, TAcc>(this IEnumerable<TSource> source, TAcc seed, Func<TAcc, TSource, TAcc> func)
     {
