@@ -1,4 +1,5 @@
 using AdventOfCode2025.Utilities;
+using System.Linq;
 
 namespace AdventOfCode2025;
 
@@ -23,20 +24,14 @@ public class Day07 : IDay
         for (int y = 1; y < grid.Height - 1; y++)
         {
             HashSet<long> currentBeams = [..beams];
-            foreach (long x in currentBeams)
+            foreach (long x in currentBeams.Where(x => grid[x, y] == '^'))
             {
-                Point p = new(x, y);
-                char cell = grid[p];
-                if (cell == '^')
-                {
-
-                    if (grid.Contains((x - 1, y + 1)))
-                        beams.Add(x - 1);
-                    if (grid.Contains((x + 1, y + 1)))
-                        beams.Add(x + 1);
-                    if (beams.Remove(x))
-                        splits++;
-                }
+                if (grid.Contains((x - 1, y + 1)))
+                    beams.Add(x - 1);
+                if (grid.Contains((x + 1, y + 1)))
+                    beams.Add(x + 1);
+                beams.Remove(x);
+                splits++;
             }
         }
 
@@ -46,40 +41,27 @@ public class Day07 : IDay
     public string SolvePart2(string input)
     {
         Grid<char> grid = Grid<char>.FromString(input);
-        HashSet<(long X, long Paths)> beams = [(grid.AllPositions().Select(p => (c: grid[p], p)).First(x => x.c == 'S').p.X, 1)];
+        Dictionary<long, long> beams = new() { { grid.AllPositions().Select(p => (c: grid[p], p)).First(x => x.c == 'S').p.X, 1 } };
 
         for (int y = 1; y < grid.Height - 1; y++)
         {
-            HashSet<(long X, long Paths)> currentBeams = [..beams];
-            foreach ((long x, long paths) in currentBeams)
+            Dictionary<long, long> currentBeams = new(beams);
+            foreach ((long x, long paths) in currentBeams.Where(b => grid[b.Key, y] == '^'))
             {
-                Point p = new(x, y);
-                char cell = grid[p];
-                if (cell == '^')
+                Point[] children = [(x - 1, y + 1), (x + 1, y + 1)];
+                foreach (var child in children.Where(grid.Contains))
                 {
-                    Point[] news = [(x - 1, y + 1), (x + 1, y + 1)];
-                    foreach (var np in news)
+                    if (beams.TryGetValue(child.X, out long existingPaths))
                     {
-                        if (grid.Contains(np))
-                        {
-                            var existing = beams.FirstOrDefault(b => b.X == np.X);
-                            if (existing != default)
-                            {
-                                beams.Remove(existing);
-                                beams.Add((existing.X, existing.Paths + paths));
-                            }
-                            else
-                            {
-                                beams.Add((np.X, paths));
-                            }
-                        }
+                        beams.Remove(child.X);
+                        beams.Add(child.X, existingPaths + paths);
                     }
-
-                    beams.Remove((x, paths));
+                    else beams.Add(child.X, paths);
                 }
+                beams.Remove(x);
             }    
         }
 
-        return $"{beams.Sum(x => x.Paths)}";
+        return $"{beams.Values.Sum()}";
     }
 }
