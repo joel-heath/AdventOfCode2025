@@ -2,6 +2,38 @@ using AdventOfCode2025.Utilities;
 
 namespace AdventOfCode2025;
 
+class Graph<T> where T : notnull
+{
+    private readonly Dictionary<T, List<T>> _adjacencyList = [];
+
+    public IEnumerable<T> Nodes => _adjacencyList.Keys;
+    public int Count => _adjacencyList.Count;
+
+    public void Connect(T from, T to)
+    {
+        if (_adjacencyList.TryGetValue(from, out var listFrom))
+            listFrom.Add(to);
+        else
+            _adjacencyList[from] = [to];
+    }
+
+    public void ConnectUndirected(T a, T b)
+    {
+        Connect(a, b);
+        Connect(b, a);
+    }
+
+    public IEnumerable<T> GetNeighbours(T node)
+    {
+        if (_adjacencyList.TryGetValue(node, out var neighbours))
+            return neighbours;
+        else
+            return [];
+    }
+
+    public IEnumerable<T> this[T node] => GetNeighbours(node);
+}
+
 public class Day08 : IDay
 {
     public int Day => 8;
@@ -14,11 +46,11 @@ public class Day08 : IDay
         { "162,817,812\r\n57,618,57\r\n906,360,560\r\n592,479,940\r\n352,342,300\r\n466,668,158\r\n542,29,236\r\n431,825,988\r\n739,650,466\r\n52,470,668\r\n216,146,977\r\n819,987,18\r\n117,168,530\r\n805,96,715\r\n346,949,466\r\n970,615,88\r\n941,993,340\r\n862,61,35\r\n984,92,344\r\n425,690,689", "25272" },
     };
 
-    private static long Find3LargestCircuits(Dictionary<Coord, List<Coord>> graph)
+    private static long Find3LargestCircuits(Graph<Coord> graph)
     {
         HashSet<Coord> visited = [];
         List<long> circuitSizes = [];
-        foreach (var node in graph.Keys)
+        foreach (var node in graph.Nodes)
         {
             if (!visited.Add(node))
                 continue;
@@ -43,20 +75,7 @@ public class Day08 : IDay
             .Aggregate(1L, (acc, val) => acc * val);
     }
 
-    private static void Connect(Dictionary<Coord, List<Coord>> graph, Coord a, Coord b)
-    {
-        if (graph.TryGetValue(a, out var listA))
-            listA.Add(b);
-        else
-            graph[a] = [b];
-
-        if (graph.TryGetValue(b, out var listB))
-            listB.Add(a);
-        else
-            graph[b] = [a];
-    }
-
-    private static bool Connected(Dictionary<Coord, List<Coord>> graph, Coord[] boxes)
+    private static bool Connected(Graph<Coord> graph, Coord[] boxes)
     {
         if (graph.Count < boxes.Length)
             return false;
@@ -107,12 +126,12 @@ public class Day08 : IDay
             .Select(xs => new Coord(xs[0], xs[1], xs[2]))];
 
         PriorityQueue<(Coord, Coord), double> ordered = OrderConnections(boxes);
-        Dictionary<Coord, List<Coord>> graph = [];
+        Graph<Coord> graph = new();
 
         for (int c = 0; c < connectionsToMake; c++)
         {
             var (a, b) = ordered.Dequeue();
-            Connect(graph, a, b);
+            graph.ConnectUndirected(a, b);
         }
 
         return $"{Find3LargestCircuits(graph)}";
@@ -127,14 +146,13 @@ public class Day08 : IDay
         PriorityQueue<(Coord, Coord), double> connections = OrderConnections(boxes);
 
         (Coord a, Coord b) lastConnection = default;
-        Dictionary<Coord, List<Coord>> graph = [];
+        Graph<Coord> graph = new();
         while (!Connected(graph, boxes))
         {
             lastConnection = connections.Dequeue();
-            Connect(graph, lastConnection.a, lastConnection.b);
+            graph.ConnectUndirected(lastConnection.a, lastConnection.b);
         }
 
         return $"{lastConnection.a.X * lastConnection.b.X}";
     }
-
 }
