@@ -40,6 +40,16 @@ public static partial class Utils
         return r < 0 ? r + divisor : r;
     }
 
+    public static IEnumerable<long> RangeTo(long start, long end)
+    {
+        long inc = end < start ? -1 : 1;
+        while (start != end)
+        {
+            yield return start;
+            start += inc;
+        }
+    }
+
     public static IEnumerable<long> Range(long count) => Range(0, count);
     public static IEnumerable<int> Range(int count) => Range(0, count);
 
