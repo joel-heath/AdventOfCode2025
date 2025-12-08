@@ -43,70 +43,17 @@ public class Day08 : IDay
             .Aggregate(1L, (acc, val) => acc * val);
     }
 
-    private static Dictionary<Coord, List<Coord>> ToAdjacencyList(IEnumerable<(Coord, Coord)> connections)
-    {
-        Dictionary<Coord, List<Coord>> graph = [];
-        foreach (var (a, b) in connections)
-            AddConnection(graph, a, b);
-
-        return graph;
-    }
-
-    private static void AddConnection(Dictionary<Coord, List<Coord>> graph, Coord a, Coord b)
+    private static void Connect(Dictionary<Coord, List<Coord>> graph, Coord a, Coord b)
     {
         if (graph.TryGetValue(a, out var listA))
             listA.Add(b);
-        else graph[a] = [b];
+        else
+            graph[a] = [b];
+
         if (graph.TryGetValue(b, out var listB))
             listB.Add(a);
-        else graph[b] = [a];
-    }
-
-    public string SolvePart1(string input)
-    {
-        int connectionsToMake = UnitTestsP1.ContainsKey(input) ? 10 : 1000;
-
-        Coord[] boxes =
-            input.Lines()
-            .Select(l => l.Split(',').Select(long.Parse).ToArray())
-            .Select(xs => new Coord(xs[0], xs[1], xs[2]))
-            .ToArray();
-
-        HashSet<(Coord, Coord)> connections = [];
-
-        for (int c = 0; c < connectionsToMake; c++)
-        {
-            (Coord, Coord) closestPair = (default, default);
-            double minDistance = double.PositiveInfinity;
-            for (int i = 0; i < boxes.Length; i++)
-            {
-                Coord iBox = boxes[i];
-                for (int j = i + 1; j < boxes.Length; j++)
-                {
-                    Coord jBox = boxes[j];
-                    if (connections.Contains((iBox, jBox)))
-                        continue;
-
-                    long dX = iBox.X - jBox.X,
-                         dY = iBox.Y - jBox.Y,
-                         dZ = iBox.Z - jBox.Z;
-
-                    double distance = Math.Sqrt(dX * dX + dY * dY + dZ * dZ);
-
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestPair = (iBox, jBox);
-                    }
-                }
-            }
-
-            connections.Add((closestPair.Item1, closestPair.Item2));
-        }
-
-        long circuits = Find3LargestCircuits(ToAdjacencyList(connections));
-
-        return $"{circuits}";
+        else
+            graph[b] = [a];
     }
 
     private static bool Connected(Dictionary<Coord, List<Coord>> graph, Coord[] boxes)
@@ -127,16 +74,10 @@ public class Day08 : IDay
         return visited.Count == boxes.Length;
     }
 
-    public string SolvePart2(string input)
+    private static PriorityQueue<(Coord, Coord), double> OrderConnections(Coord[] boxes)
     {
-        Coord[] boxes =
-            input.Lines()
-            .Select(l => l.Split(',').Select(long.Parse).ToArray())
-            .Select(xs => new Coord(xs[0], xs[1], xs[2]))
-            .ToArray();
-
         PriorityQueue<(Coord, Coord), double> connections = new();
-        
+
         for (int i = 0; i < boxes.Length; i++)
         {
             Coord iBox = boxes[i];
@@ -154,14 +95,46 @@ public class Day08 : IDay
             }
         }
 
+        return connections;
+    }
+
+    public string SolvePart1(string input)
+    {
+        int connectionsToMake = UnitTestsP1.ContainsKey(input) ? 10 : 1000;
+
+        Coord[] boxes = [..input.Lines()
+            .Select(l => l.Split(',').Select(long.Parse).ToArray())
+            .Select(xs => new Coord(xs[0], xs[1], xs[2]))];
+
+        PriorityQueue<(Coord, Coord), double> ordered = OrderConnections(boxes);
+        Dictionary<Coord, List<Coord>> graph = [];
+
+        for (int c = 0; c < connectionsToMake; c++)
+        {
+            var (a, b) = ordered.Dequeue();
+            Connect(graph, a, b);
+        }
+
+        return $"{Find3LargestCircuits(graph)}";
+    }
+
+    public string SolvePart2(string input)
+    {
+        Coord[] boxes = [..input.Lines()
+            .Select(l => l.Split(',').Select(long.Parse).ToArray())
+            .Select(xs => new Coord(xs[0], xs[1], xs[2]))];
+
+        PriorityQueue<(Coord, Coord), double> connections = OrderConnections(boxes);
+
         (Coord a, Coord b) lastConnection = default;
         Dictionary<Coord, List<Coord>> graph = [];
         while (!Connected(graph, boxes))
         {
             lastConnection = connections.Dequeue();
-            AddConnection(graph, lastConnection.a, lastConnection.b);
+            Connect(graph, lastConnection.a, lastConnection.b);
         }
 
         return $"{lastConnection.a.X * lastConnection.b.X}";
-    }   
+    }
+
 }

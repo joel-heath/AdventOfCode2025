@@ -39,7 +39,7 @@ Hopefully, for the most part, this will make my C# code more succinct and clear,
 | [5](AdventOfCode2025/Day05.cs) | 🟪 | [Déjà vu on part 2…](https://github.com/joel-heath/AdventOfCode2022/blob/master/AdventOfCode2022/Day15.cs) I initially converted today's into functional code, but admittedly it looked pretty terrible in C# [(it's cleaner in Haskell though!)](https://github.com/joel-heath/AoC25Haskell/blob/main/Day5.hs), so I've stuck with my original imperative solution. It merges ranges in average time `O(nlogn)` by sorting then merging in one `O(n)` passthrough. |
 | [6](AdventOfCode2025/Day06.cs) | 🟣 | Today's part two brought to my attention the lack of a generic extension of `string.Split()`. So I created created `.SplitBy()`, where `charArray.SplitBy(' ')` is the same as `string.Split(' ')`, but you can also do `lines.Split("")` to split on empty lines. With that and a touch of `.Trim()`, part two was pretty smooth sailing. |
 | [7](AdventOfCode2025/Day07.cs) | 🟩 | I solved today's by keeping a collection of beams (rather than drawing the beams on the grid) which made extending to part two much easier. In my opinon today's begs to be imperative with mutable sets / dictionaries, since my Haskell solution mimics my C# one by creating new collections each time this solution would modify the collection. |
-| [8](AdventOfCode2025/Day08.cs) | ⚫ |  |
+| [8](AdventOfCode2025/Day08.cs) | 🟨 | I AM CURRENTLY WORKING ON REDUCING IT HAVE PATIENCE. I've got it going fast though. |
 | [9](AdventOfCode2025/Day09.cs) | ⚫ |  |
 | [10](AdventOfCode2025/Day10.cs) | ⚫ |  |
 | [11](AdventOfCode2025/Day11.cs) | ⚫ |  |
