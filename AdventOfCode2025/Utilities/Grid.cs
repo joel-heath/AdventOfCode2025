@@ -286,6 +286,20 @@ public struct Point(long x, long y)
                 : neighbours.Where(p => p.Contained(width))
             : neighbours;
     }
+
+    public readonly IEnumerable<Point> LineTo(Point end, bool inclusive = true)
+    {
+        if (!(this.X == end.X || this.Y == end.Y || Math.Abs(this.X - end.X) == Math.Abs(this.Y - end.Y)))
+            throw new ArgumentException("Points must be aligned horizontally, vertically, or diagonally");
+
+        int xCmp = end.X.CompareTo(this.X);
+        int yCmp = end.Y.CompareTo(this.Y);
+
+        for (long x = this.X, y = this.Y; (x, y) != end; x += xCmp, y += yCmp)
+            yield return (x, y);
+
+        if (inclusive) yield return end;
+    }
 }
 
 public struct Coord(long x, long y, long z)

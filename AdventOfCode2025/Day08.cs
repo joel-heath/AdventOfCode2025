@@ -24,12 +24,7 @@ class Graph<T> where T : notnull
     }
 
     public IEnumerable<T> GetNeighbours(T node)
-    {
-        if (_adjacencyList.TryGetValue(node, out var neighbours))
-            return neighbours;
-        else
-            return [];
-    }
+        => _adjacencyList.GetValueOrDefault(node, []);
 
     public IEnumerable<T> this[T node] => GetNeighbours(node);
 }
