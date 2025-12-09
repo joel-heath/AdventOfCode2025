@@ -246,6 +246,9 @@ public struct Point(long x, long y)
     public readonly long this[int index] => index == 0 ? X : Y;
 
     public static Point operator *(long scalar, Point point) => new(scalar * point.X, scalar * point.Y);
+    public static Point operator *(Point point, long scalar) => new(scalar * point.X, scalar * point.Y);
+    public static Point operator /(Point point, long invScalar) => new(point.X / invScalar, point.Y / invScalar);
+
     public static Point operator +(Point a, Point b) => new(a.X + b.X, a.Y + b.Y);
     public static Point operator -(Point a, Point b) => new(a.X - b.X, a.Y - b.Y);
     public static Point operator -(Point a) => new(-a.X, -a.Y);

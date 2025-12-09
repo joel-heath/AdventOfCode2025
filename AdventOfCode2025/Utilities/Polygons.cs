@@ -1,114 +1,181 @@
-﻿namespace AdventOfCode2025.Utilities;
+﻿using System.Collections;
+
+namespace AdventOfCode2025.Utilities;
+public readonly record struct Rectangle : IEnumerable<Point>
+{
+    public readonly Point MinMin { get; }
+    public readonly Point MaxMin { get; }
+    public readonly Point MinMax { get; }
+    public readonly Point MaxMax { get; }
+
+    public Rectangle(Point a, Point b)
+    {
+        (long maxX, long minX) = a.X > b.X ? (a.X, b.X) : (b.X, a.X);
+        (long maxY, long minY) = a.Y > b.Y ? (a.Y, b.Y) : (b.Y, a.Y);
+
+        MinMin = (minX, minY);
+        MaxMin = (maxX, minY);
+        MinMax = (minX, maxY);
+        MaxMax = (maxX, maxY);
+    }
+
+    public readonly IEnumerator<Point> GetEnumerator()
+    {
+        yield return MinMin;
+        yield return MaxMin;
+        yield return MinMax;
+        yield return MaxMax;
+    }
+
+    readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public readonly record struct Line : IEnumerable<Point>
+{
+    public readonly Point Min { get; }
+    public readonly Point Max { get; }
+
+    public readonly bool IsHorizontal => Min.Y == Max.Y;
+    public readonly bool IsVertical => Min.X == Max.X;
+
+    public Line(Point a, Point b)
+    {
+        (Min, Max) = a.X < b.X || a.Y < b.Y ? (a, b) : (b, a);
+    }
+
+    public readonly IEnumerator<Point> GetEnumerator()
+    {
+        yield return Min;
+        yield return Max;
+    }
+
+    readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
 
 public static class Polygons
 {
-
-    public static bool IsOnLineSegment(Point a, Point b, Point p)
-        => (a.Y == b.Y) // horizontal
-            ? p.Y == a.Y &&
-                p.X >= Math.Min(a.X, b.X) &&
-                p.X <= Math.Max(a.X, b.X)
-            : (a.X == b.X) && p.X == a.X &&
-                p.Y >= Math.Min(a.Y, b.Y) &&
-                p.Y <= Math.Max(a.Y, b.Y);
-
-    public static bool IsStrictlyInterior(Point[] polygon, Point p)
+    /// <summary>
+    /// Returns all edges from a collection of vertices, automatically closing the polygon for you.
+    /// </summary>
+    /// <param name="polygon">??? the polygon bro what</param>
+    /// <returns>if only i had alr explained.</returns>
+    public static IEnumerable<Line> Edges(this Point[] polygon)
     {
-        bool inside = false;
-
         for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
         {
-            Point a = polygon[i],
-                  b = polygon[j];
+            yield return new Line(polygon[i], polygon[j]);
+        }
+    }
 
-            // Ignore horizontal edges lying on ray
-            if (a.Y == b.Y)
+    /// <summary>
+    /// Checks whether two rectangles intersect or overlap with axis-aligned bounding box intersection.
+    /// </summary>
+    /// <param name="a">The first rectangle to test for intersection.</param>
+    /// <param name="b">The second rectangle to test for intersection.</param>
+    /// <returns>Figure it out lil bro</returns>
+    public static bool AABB(Rectangle a, Rectangle b)
+    {
+        bool aRightOfB = a.MinMin.X > b.MaxMax.X,
+             aLeftOfB = a.MaxMax.X < b.MinMin.X,
+             aAboveB = a.MaxMax.Y < b.MinMin.Y,
+             aBelowB = a.MinMin.Y > b.MaxMax.Y;
+
+        return !aRightOfB && !aLeftOfB && !aAboveB && !aBelowB;
+    }
+
+    /// <summary>
+    /// Checks if a line intersects the strict interior of the rectangle, so returns false for a rectangle's own edges.
+    /// </summary>
+    /// <param name="line">Line segment</param>
+    /// <param name="rect">Rectangle</param>
+    /// <returns>I alr explained this</returns>
+    public static bool LineIntersectsRectangle(Line line, Rectangle rect)
+    {
+        if (line.IsHorizontal)
+        {
+            var y = line.Min.Y;
+            if (rect.MinMin.Y < y && y < rect.MaxMax.Y)
+            {
+                long rectMinX = rect.MinMin.X,
+                     rectMaxX = rect.MaxMax.X,
+                     lineMinX = line.Min.X,
+                     lineMaxX = line.Max.X;
+
+                bool lineLeftOfRect = lineMinX < rectMaxX,
+                     lineRightOfRect = lineMaxX > rectMinX;
+
+                return lineLeftOfRect && lineRightOfRect;
+            }
+        }
+        else
+        {
+            var x = line.Min.X;
+            if (rect.MinMin.X < x && x < rect.MaxMax.X)
+            {
+                long rectMinY = rect.MinMin.Y,
+                     rectMaxY = rect.MaxMax.Y,
+                     lineMinY = line.Min.Y,
+                     lineMaxY = line.Max.Y;
+
+                bool lineBelowRect = lineMinY < rectMaxY,
+                     lineAboveRect = lineMaxY > rectMinY;
+
+                return lineBelowRect && lineAboveRect;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool PointInLine(Point point, Line line)
+        => line.Min.X <= point.X && point.X <= line.Max.X &&
+           line.Min.Y <= point.Y && point.Y <= line.Max.Y;
+
+    /// <summary>
+    /// Determines whether a point lies in a rectangle, strict to exclude boundary.
+    /// </summary>
+    /// <param name="point">the point</param>
+    /// <param name="rect">the rectangle or "rectange" as the kids call it these days</param>
+    /// <param name="strict">alr explained pay attention</param>
+    /// <returns>take a guess</returns>
+    public static bool PIP(Point point, Rectangle rect, bool strict = true)
+        => strict
+        ? rect.MinMin.X < point.X && point.X < rect.MaxMax.X &&
+          rect.MinMin.Y < point.Y && point.Y < rect.MaxMax.Y
+        : rect.MinMin.X <= point.X && point.X <= rect.MaxMax.X &&
+          rect.MinMin.Y <= point.Y && point.Y <= rect.MaxMax.Y;
+
+    /// <summary>
+    /// Returns whether `point` is inside `polygon` using the even-odd rule. Polygon assumed to be simple.
+    /// </summary>
+    /// <param name="point">Point to be tested for inclusion.</param>
+    /// <param name="polygon">Vertices of the polygon.</param>
+    /// <param name="strict">Whether to consider points on the boundary as outside or inside.</param>
+    /// <returns>hmmm i wonder what...</returns>
+    public static bool PIP(Point point, Point[] polygon, bool strict = true)
+    {
+        if (polygon.Edges().Any(e => PointInLine(point, e)))
+            return !strict;
+
+        bool inside = false;
+
+        foreach (var edge in polygon.Edges())
+        {
+            if (edge.IsHorizontal)
                 continue;
 
-            bool intersects =
-                (a.Y > p.Y) != (b.Y > p.Y) &&
-                p.X < a.X + (double)(b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y);
+            // check if line segment l intersects the horizontal half-line stretching from x = -inf to end
 
-            if (intersects)
+            // half-open interval [Min, Max) to avoid double-counting vertices (since each vertex is shared between two edges)
+            bool isLevel = edge.Min.Y <= point.Y && point.Y < edge.Max.Y;
+
+            // Check if the edge is strictly to the left of the point
+            bool isToLeft = edge.Min.X < point.X;
+
+            if (isLevel && isToLeft)
                 inside = !inside;
         }
 
         return inside;
     }
-
-    public static bool IsOnBoundary(Point[] polygon, Point p)
-    {
-        for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
-        {
-            if (IsOnLineSegment(polygon[j], polygon[i], p))
-                return true;
-        }
-        return false;
-    }
-
-    public static bool IsInside(Point[] polygon, Point p)
-        => IsOnBoundary(polygon, p) || IsStrictlyInterior(polygon, p);
-
-
-    public static bool IsInsideRectangle(Point a, Point b, Point p)
-    {
-        long maxX, maxY, minX, minY;
-        (maxX, minX) = (a.X > b.X) ? (a.X, b.X) : (b.X, a.X);
-        (maxY, minY) = (a.Y > b.Y) ? (a.Y, b.Y) : (b.Y, a.Y);
-
-        return minX <= p.X && p.X <= maxX
-            && minY <= p.Y && p.Y <= maxY;
-    }
-
-    public static bool IsStrictlyInsideRectangle(Point a, Point b, Point p)
-    {
-        (long maxX, long minX) = (a.X > b.X) ? (a.X, b.X) : (b.X, a.X);
-        (long maxY, long minY) = (a.Y > b.Y) ? (a.Y, b.Y) : (b.Y, a.Y);
-
-        return minX < p.X && p.X < maxX
-            && minY < p.Y && p.Y < maxY;
-    }
-
-    public static bool IsRectFullyInside(Point[] poly, Point a, Point b)
-    {
-        (long maxX, long minX) = (a.X > b.X) ? (a.X, b.X) : (b.X, a.X);
-        (long maxY, long minY) = (a.Y > b.Y) ? (a.Y, b.Y) : (b.Y, a.Y);
-
-        // Check crossings on each of the 4 rectangle sides
-        if (EdgeCrossesExterior(poly, (minX, minY), (maxX, minY))) return false; // top
-        if (EdgeCrossesExterior(poly, (minX, maxY), (maxX, maxY))) return false; // bottom
-        if (EdgeCrossesExterior(poly, (minX, minY), (minX, maxY))) return false; // left
-        if (EdgeCrossesExterior(poly, (maxX, minY), (maxX, maxY))) return false; // right
-
-        return true;
-    }
-
-    public static bool EdgeCrossesExterior(Point[] polygon, Point a, Point b)
-    {
-        for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
-        {
-            if (LinesIntersect(polygon[j], polygon[i], a, b))
-                return true;
-        }
-        return false;
-    }
-
-    // cross‑product 
-    public static bool LinesIntersect(Point a1, Point a2, Point b1, Point b2)
-    {
-        long det = (a2.X - a1.X) * (b2.Y - b1.Y) - (a2.Y - a1.Y) * (b2.X - b1.X);
-        if (det == 0)
-            return false; // parallel lines
-        long ua = (b2.X - b1.X) * (a1.Y - b1.Y) - (b2.Y - b1.Y) * (a1.X - b1.X);
-        long ub = (a2.X - a1.X) * (a1.Y - b1.Y) - (a2.Y - a1.Y) * (a1.X - b1.X);
-        if (det < 0)
-        {
-            ua = -ua;
-            ub = -ub;
-            det = -det;
-        }
-        return 0 < ua && ua < det && 0 < ub && ub < det;
-    }
-
-
 }

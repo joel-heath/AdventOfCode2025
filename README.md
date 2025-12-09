@@ -40,7 +40,7 @@ Hopefully, for the most part, this will make my C# code more succinct and clear,
 | [6](AdventOfCode2025/Day06.cs) | 🟣 | Today's part two brought to my attention the lack of a generic extension of `string.Split()`. So I created created `.SplitBy()`, where `charArray.SplitBy(' ')` is the same as `string.Split(' ')`, but you can also do `lines.Split("")` to split on empty lines. With that and a touch of `.Trim()`, part two was pretty smooth sailing. |
 | [7](AdventOfCode2025/Day07.cs) | 🟩 | I solved today's by keeping a collection of beams (rather than drawing the beams on the grid) which made extending to part two much easier. In my opinion today's begs to be imperative with mutable sets / dictionaries, since my Haskell solution mimics my C# one by creating new collections each time this solution would modify the collection. |
 | [8](AdventOfCode2025/Day08.cs) | 🟨 | The only 'trick' to today's was generating all connections and ordering them (rather than generating only those that were needed, requiring you to check each time whether you'd already evaluated it). To address the not-green-or-higher rating for todays: idk how to reduce this. The Haskell solution takes multiple millennia so don't look at that. |
-| [9](AdventOfCode2025/Day09.cs) | ⚫ | It is solved but not in a way I particularly understand and by using methods that don't exactly do what I want them to... I'm working on it... |
+| [9](AdventOfCode2025/Day09.cs) | 🟨 | WE'RE GETTING THERE DW |
 | [10](AdventOfCode2025/Day10.cs) | ⚫ |  |
 | [11](AdventOfCode2025/Day11.cs) | ⚫ |  |
 | [12](AdventOfCode2025/Day12.cs) | ⚫ |  |
