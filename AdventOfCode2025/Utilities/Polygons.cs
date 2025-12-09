@@ -8,6 +8,8 @@ public readonly record struct Rectangle : IEnumerable<Point>
     public readonly Point MinMax { get; }
     public readonly Point MaxMax { get; }
 
+    public readonly long Area() => (MaxMax.X - MinMin.X + 1) * (MaxMax.Y - MinMin.Y + 1);
+
     public Rectangle(Point a, Point b)
     {
         (long maxX, long minX) = a.X > b.X ? (a.X, b.X) : (b.X, a.X);
@@ -85,47 +87,17 @@ public static class Polygons
 
     /// <summary>
     /// Checks if a line intersects the strict interior of the rectangle, so returns false for a rectangle's own edges.
+    /// Assumes line is horizontal or vertical.
     /// </summary>
     /// <param name="line">Line segment</param>
     /// <param name="rect">Rectangle</param>
     /// <returns>I alr explained this</returns>
     public static bool LineIntersectsRectangle(Line line, Rectangle rect)
-    {
-        if (line.IsHorizontal)
-        {
-            var y = line.Min.Y;
-            if (rect.MinMin.Y < y && y < rect.MaxMax.Y)
-            {
-                long rectMinX = rect.MinMin.X,
-                     rectMaxX = rect.MaxMax.X,
-                     lineMinX = line.Min.X,
-                     lineMaxX = line.Max.X;
-
-                bool lineLeftOfRect = lineMinX < rectMaxX,
-                     lineRightOfRect = lineMaxX > rectMinX;
-
-                return lineLeftOfRect && lineRightOfRect;
-            }
-        }
-        else
-        {
-            var x = line.Min.X;
-            if (rect.MinMin.X < x && x < rect.MaxMax.X)
-            {
-                long rectMinY = rect.MinMin.Y,
-                     rectMaxY = rect.MaxMax.Y,
-                     lineMinY = line.Min.Y,
-                     lineMaxY = line.Max.Y;
-
-                bool lineBelowRect = lineMinY < rectMaxY,
-                     lineAboveRect = lineMaxY > rectMinY;
-
-                return lineBelowRect && lineAboveRect;
-            }
-        }
-
-        return false;
-    }
+        => line.IsHorizontal
+            ? rect.MinMin.Y < line.Min.Y && line.Min.Y < rect.MaxMax.Y
+                && line.Min.X < rect.MaxMax.X && line.Max.X > rect.MinMin.X
+            : rect.MinMin.X < line.Min.X && line.Min.X < rect.MaxMax.X
+                && line.Min.Y < rect.MaxMax.Y && line.Max.Y > rect.MinMin.Y;
 
     public static bool PointInLine(Point point, Line line)
         => line.Min.X <= point.X && point.X <= line.Max.X &&
