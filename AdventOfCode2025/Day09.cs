@@ -28,7 +28,7 @@ public class Day09 : IDay
         if (Memo.TryGetValue(p, out bool res))
             return res;
 
-        return Memo[p] = Polygons.IsInteriorOrOnBoundary(reds, p);
+        return Memo[p] = Polygons.IsInside(reds, p);
     }
 
     public string SolvePart2(string input)
@@ -39,12 +39,16 @@ public class Day09 : IDay
             .Where(vertices =>
             {
                 Point[] fullVertices = [vertices.A, (vertices.A.X, vertices.B.Y), vertices.B, (vertices.B.X, vertices.A.Y)];
-                Point[] bounds = 
+                if (!Contained(reds, fullVertices[1]) || !Contained(reds, fullVertices[3])
+                    || reds.Any(r => Polygons.IsStrictlyInsideRectangle(vertices.A, vertices.B, r)))
+                    return false;
+
+                Point[] bounds =
                     [..fullVertices.Append(fullVertices[0])
                         .Window(2)
                         .SelectMany(x => x[0].LineTo(x[1], inclusive: false))];
 
-                return bounds.All(p => Contained(reds, p));
+                return bounds.Every(2).All(b => Contained(reds, b));
             })
             .Max(x => (Math.Abs(x.A.X - x.B.X) + 1) * (Math.Abs(x.A.Y - x.B.Y) + 1))}";
     }

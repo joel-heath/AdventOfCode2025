@@ -14,6 +14,21 @@ public static class ExtensionMethods
         => [..source.Split(Environment.NewLine + Environment.NewLine, options)
                     .Select(group => group.Split(Environment.NewLine))];
 
+    public static IEnumerable<T> Every<T>(this IEnumerable<T> source, int step)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(step);
+
+        int index = 0;
+        foreach (var item in source)
+        {
+            if (index % step == 0)
+                yield return item;
+
+            index++;
+        }
+    }
+
+
     /// <summary>
     /// <c>SplitBy(["a", "b", "c", "", "d", "", "e", "f", "", "h"], "") -> [["a", "b", "c"], ["d"], ["e", "f"], ["h"]]</c>
     /// </summary>

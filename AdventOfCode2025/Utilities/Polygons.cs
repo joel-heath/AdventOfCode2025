@@ -2,87 +2,71 @@
 
 public static class Polygons
 {
-    public static bool IsPointOnSegment(Point a, Point b, Point p)
+
+    public static bool IsOnLineSegment(Point a, Point b, Point p)
+        => (a.Y == b.Y) // horizontal
+            ? p.Y == a.Y &&
+                p.X >= Math.Min(a.X, b.X) &&
+                p.X <= Math.Max(a.X, b.X)
+            : (a.X == b.X) && p.X == a.X &&
+                p.Y >= Math.Min(a.Y, b.Y) &&
+                p.Y <= Math.Max(a.Y, b.Y);
+
+    public static bool IsStrictlyInterior(Point[] polygon, Point p)
     {
-        // Vector cross product = 0 → collinear
-        long cross = (p.Y - a.Y) * (b.X - a.X)
-                   - (p.X - a.X) * (b.Y - a.Y);
+        bool inside = false;
 
-        if (cross != 0)
-            return false;
-
-        // Dot product check → within the bounding box of the segment
-        long dot = (p.X - a.X) * (b.X - a.X)
-                 + (p.Y - a.Y) * (b.Y - a.Y);
-
-        if (dot < 0)
-            return false;
-
-        long lenSq = (b.X - a.X) * (b.X - a.X)
-                   + (b.Y - a.Y) * (b.Y - a.Y);
-
-        return dot <= lenSq;
-    }
-
-
-    public static bool IsInteriorOrOnBoundary(Point[] polygon, Point p)
-    {
-        // Boundary Test
         for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
         {
-            if (IsPointOnSegment(polygon[j], polygon[i], p))
-                return true;
-        }
-        return IsInterior(polygon, p);
-    }
+            Point a = polygon[i],
+                  b = polygon[j];
 
-    public static bool IsInterior(Point[] polygon, Point p)
-    {
-        int n = polygon.Length;
-        bool inside = false;
-        for (int i = 0, j = n - 1; i < n; j = i++)
-        {
-            if (((polygon[i].Y > p.Y) != (polygon[j].Y > p.Y)) &&
-                (p.X < (double)(polygon[j].X - polygon[i].X) * (p.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
-                    inside = !inside;
+            // Ignore horizontal edges lying on ray
+            if (a.Y == b.Y)
+                continue;
+
+            bool intersects =
+                (a.Y > p.Y) != (b.Y > p.Y) &&
+                p.X < a.X + (double)(b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y);
+
+            if (intersects)
+                inside = !inside;
         }
+
         return inside;
     }
 
-    private static Point GetStart(Point[] boundary)
+    public static bool IsOnBoundary(Point[] polygon, Point p)
     {
-        var minY = boundary.Min(p => p.Y);
-        var maxY = boundary.Max(p => p.Y);
-        var minX = boundary.Min(p => p.X);
-        var maxX = boundary.Max(p => p.X);
-
-        for (long y = minY; y <= maxY; y++)
+        for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
         {
-            for (long x = minX; x <= maxX; x++)
-                if (IsInterior(boundary, (x, y)))
-                    return (x, y);
+            if (IsOnLineSegment(polygon[j], polygon[i], p))
+                return true;
         }
-
-        throw new Exception("No start point found");
+        return false;
     }
 
-    public static HashSet<Point> FloodFill(Point[] boundary)
+    public static bool IsInside(Point[] polygon, Point p)
+        => IsOnBoundary(polygon, p) || IsStrictlyInterior(polygon, p);
+
+
+    public static bool IsInsideRectangle(Point a, Point b, Point p)
     {
-        HashSet<Point> filled = [];
-        Queue<Point> toFill = new([GetStart(boundary)]);
-        Point[] directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-        while (toFill.TryDequeue(out Point current))
-        {
-            if (filled.Contains(current) || !IsInterior(boundary, current))
-                continue;
-            filled.Add(current);
-            foreach (var dir in directions)
-            {
-                Point neighbour = (current.X + dir.X, current.Y + dir.Y);
-                if (!filled.Contains(neighbour))
-                    toFill.Enqueue(neighbour);
-            }
-        }
-        return filled;
+        long maxX, maxY, minX, minY;
+        (maxX, minX) = (a.X > b.X) ? (a.X, b.X) : (b.X, a.X);
+        (maxY, minY) = (a.Y > b.Y) ? (a.Y, b.Y) : (b.Y, a.Y);
+
+        return minX <= p.X && p.X <= maxX
+            && minY <= p.Y && p.Y <= maxY;
+    }
+
+    public static bool IsStrictlyInsideRectangle(Point a, Point b, Point p)
+    {
+        long maxX, maxY, minX, minY;
+        (maxX, minX) = (a.X > b.X) ? (a.X, b.X) : (b.X, a.X);
+        (maxY, minY) = (a.Y > b.Y) ? (a.Y, b.Y) : (b.Y, a.Y);
+
+        return minX < p.X && p.X < maxX
+            && minY < p.Y && p.Y < maxY;
     }
 }
