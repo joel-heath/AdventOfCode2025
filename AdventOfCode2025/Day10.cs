@@ -1,7 +1,9 @@
 using AdventOfCode2025.Utilities;
 using System.Text.RegularExpressions;
+using Highs;
 
 namespace AdventOfCode2025;
+
 
 public class Machine(ulong indicatorLightsDiagram, int[][] buttonWiringSchematics, int[] joltageRequirements)
 {
@@ -161,10 +163,11 @@ public class Day10 : IDay
         // The counters must equal the required configuration
         // So we have n constraints given n counters (and n requirements)
 
-
         return $"{machines.Sum(machine =>
         {
-            double[] objectiveFunction = new double[machine.ButtonWiringSchematics.Length];
+            int variables = machine.ButtonWiringSchematics.Length;
+
+            double[] objectiveFunction = new double[variables];
             for (int i = 0; i < objectiveFunction.Length; i++)
                 objectiveFunction[i] = 1;
 
@@ -178,9 +181,88 @@ public class Day10 : IDay
                 constraints[i][^1] = machine.JoltageRequirements[i];
             }
 
-            (int minimum, int[] assignments) = IntegerSimplex.Minimise(objectiveFunction, [], constraints, []);
-
-            return minimum;
+            return Solve(objectiveFunction, constraints);
         })}";
+    }
+
+    // AI generated function below:
+    // HiGHS has some GOOFY API
+    private static int Solve(double[] objectiveFunction, double[][] rawConstraints)
+    {
+        int numCols = objectiveFunction.Length;
+        int numRows = rawConstraints.Length;
+
+        // Arrays for HiGHS
+        double[] rowLower = new double[numRows];
+        double[] rowUpper = new double[numRows];
+
+        // Sparse Matrix Builders
+        List<int> astart = [];
+        List<int> aindex = [];
+        List<double> avalue = [];
+
+        // Assuming all variables are >= 0. Change to -1e30 if they can be negative.
+        double[] colLower = new double[numCols]; // 0s by default
+        double[] colUpper = [..Enumerable.Repeat(1.0e30, numCols)];
+
+        int currentNzCount = 0;
+
+        for (int i = 0; i < numRows; i++)
+        {
+            // Mark the start of this row in the sparse value array
+            astart.Add(currentNzCount);
+
+            // 1. EXTRACT RHS: The last element of your array
+            double rhs = rawConstraints[i][numCols]; // or rawConstraints[i].Last()
+
+            // 2. DEFINE EQUALITY: Lower Bound == Upper Bound == RHS
+            rowLower[i] = rhs;
+            rowUpper[i] = rhs;
+
+            // 3. BUILD SPARSE MATRIX: Iterate only the coefficients
+            for (int j = 0; j < numCols; j++)
+            {
+                double coeff = rawConstraints[i][j];
+
+                // OPTIMIZATION: Only add non-zero values. 
+                // This is the "Sparse" part that makes HiGHS fast.
+                if (Math.Abs(coeff) > 1e-9)
+                {
+                    aindex.Add(j);      // Which column (variable) is this?
+                    avalue.Add(coeff);  // What is the value?
+                    currentNzCount++;
+                }
+            }
+        }
+        // Add final entry to astart (standard CSR format requirement)
+        astart.Add(currentNzCount);
+
+
+        // --- 3. Set Integrality (All Integers) ---
+        int[] integrality = Enumerable.Repeat((int)HighsIntegrality.kInteger, numCols).ToArray();
+
+        // --- 4. Configure & Run ---
+        HighsModel model = new(
+            objectiveFunction,
+            colLower,
+            colUpper,
+            rowLower,
+            rowUpper,
+            [..astart],
+            [..aindex],
+            [..avalue],
+            integrality,
+            0,
+            HighsMatrixFormat.kRowwise, // Important: We built it Row-wise
+            HighsObjectiveSense.kMinimize
+        );
+
+        HighsLpSolver solver = new();
+        solver.setBoolOptionValue("output_flag", 0); // no spamming
+
+        solver.passMip(model); // passMip for Integers
+        solver.run();
+
+        return (int)Math.Round(solver.getInfo().ObjectiveValue);
     }
 }
