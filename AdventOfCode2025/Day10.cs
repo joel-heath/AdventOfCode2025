@@ -1,4 +1,5 @@
 using AdventOfCode2025.Utilities;
+using System;
 using System.ComponentModel.Design;
 using System.Text.RegularExpressions;
 
@@ -48,61 +49,95 @@ public class Day10 : IDay
         { "TestInput1", "ExpectedOutput1" }
     };
 
+    private static ulong Encode(bool[] bits)
+    {
+        ulong value = 0;
+
+        for (int i = 0; i < bits.Length; i++)
+        {
+            if (bits[i])
+                value |= 1UL << i;
+        }
+
+        return value;
+    }
+
+    private static bool[] Decode(ulong value, int length)
+    {
+        bool[] bits = new bool[length];
+
+        for (int i = 0; i < length; i++)
+            bits[i] = (value & (1UL << i)) != 0;
+
+        return bits;
+    }
+
+    private static ulong Toggle(ulong indicatorLights, int light)
+        => indicatorLights ^ (1UL << light);
+
+    private static ulong PushButton(ulong indicatorLights, int[] button)
+    {
+        foreach (int i in button)
+            indicatorLights = Toggle(indicatorLights, i);
+
+        return indicatorLights;
+    }
+
+    private static bool LightsConfiguredCorrectly(ulong indicatorLights, ulong correct)
+        => indicatorLights == correct;
+
+    private static int CountIncorrectlyConfiguredLights(ulong indicatorLights, ulong correct)
+    {
+        ulong diff = indicatorLights ^ correct;
+        int different = System.Numerics.BitOperations.PopCount(diff);
+        return different;
+    }
+
     private static int SafeIncrement(int value)
         => value == int.MaxValue ? int.MaxValue : value + 1;
 
-    private static Dictionary<string, int> memo = [];
-
-    private static int Configure(Machine machine, int depth)
+    private static int Configure(Machine machine)
     {
-        if (depth == 0)
-            return int.MaxValue;
-        if (machine.LightsConfiguredCorrectly())
-            return 0;
+        Queue<(ulong, int)> queue = [];
+        Dictionary<ulong, int> visited = [];
 
-        string memoKey = string.Concat(machine.IndicatorLights.Select(c => c ? '#' : '.'));
-        if (memo.TryGetValue(memoKey, out var memoValue))
-            return memoValue;
+        ulong correctIndicatorLights = Encode(machine.IndicatorLightsDiagram);
 
-        var buttons = machine.ButtonWiringSchematics
-            .OrderByDescending(button =>
-            {
-                machine.PushButton(button);
-                int count = machine.CountCorrectlyConfiguredLights();
-                machine.PushButton(button);
-                return count;
-            });
-        
+        queue.Enqueue((Encode(machine.IndicatorLights), 0));
+
         int min = int.MaxValue;
-        foreach (var button in buttons)
+        while (queue.TryDequeue(out var data))
         {
-            machine.PushButton(button);
-            int value = SafeIncrement(Configure(machine, depth - 1));
-            machine.PushButton(button);
-            if (value < min)
-                min = value;
-        }
+            (ulong indicatorLights, int depth) = data;
 
-        if (min != int.MaxValue)
-            memo[memoKey] = min;
+            if (depth >= min)
+                continue;
+
+            if (LightsConfiguredCorrectly(indicatorLights, correctIndicatorLights))
+            {
+                min = depth;
+                continue;
+            }
+
+            if (visited.TryGetValue(indicatorLights, out int visitedDepth) && visitedDepth >= depth)
+                continue;
+
+            visited[indicatorLights] = depth;
+
+            var buttons = machine.ButtonWiringSchematics
+                .Select(button =>
+                {
+                    ulong pushed = PushButton(indicatorLights, button);
+                    int count = CountIncorrectlyConfiguredLights(pushed, correctIndicatorLights);
+                    return (pushed, count);
+                })
+                .OrderBy(button => button.count);
+
+            foreach (var (pushed, count) in buttons)
+                queue.Enqueue((pushed, depth + 1));
+        }
 
         return min;
-    }
-
-    private static int IDS(Machine machine)
-    {
-        memo = []; // memo is machine-dependent
-        int depth = 0;
-        int value = int.MaxValue;
-        while (value == int.MaxValue)
-        {
-            depth++;
-            value = Configure(machine, depth);
-        }
-
-        Console.WriteLine("Solved! at depth " + depth);
-
-        return value;
     }
 
     public string SolvePart1(string input)
@@ -124,7 +159,7 @@ public class Day10 : IDay
             return new Machine(indicators, schematics, requirements);
         })];
 
-        return $"{machines.Sum(IDS)}";
+        return $"{machines.Sum(Configure)}";
     }
 
     public string SolvePart2(string input)
