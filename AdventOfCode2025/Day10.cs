@@ -111,74 +111,6 @@ public class Day10 : IDay
         return min;
     }
 
-    private static bool JoltagesConfiguredCorrectly(int[] joltages, int[] reference)
-        => joltages.SequenceEqual(reference);
-
-    private static bool AnyJoltageTooLarge(int[] joltages, int[] reference)
-        => joltages.Zip(reference).Any(t => t.First > t.Second);
-
-    private static int[] PushButton(int[] joltages, int[] button)
-    {
-        int[] output = new int[joltages.Length];
-        Array.Copy(joltages, output, joltages.Length);
-
-        //for (int i = 0; i < button.Length; i++)
-        //    output[i] += button[i];
-
-        foreach (var index in button)
-            output[index]++;
-
-        return output;
-    }
-
-    private static int CalculateJoltageDifference(int[] joltages, int[] reference)
-        => joltages.Zip(reference).Sum(t => t.Second - t.First);
-
-    private static int Configure2(Machine machine)
-    {
-        Console.WriteLine("configuring new machine");
-
-        PriorityQueue<(int[], int), int> queue = new();
-        Dictionary<string, int> visited = [];
-
-        queue.Enqueue((new int[machine.JoltageRequirements.Length], 0), 0);
-
-        int min = int.MaxValue;
-        while (queue.TryDequeue(out var data, out _))
-        {
-            (int[] joltages, int depth) = data;
-
-            if (depth >= min || AnyJoltageTooLarge(joltages, machine.JoltageRequirements))
-                continue;
-
-            if (JoltagesConfiguredCorrectly(joltages, machine.JoltageRequirements))
-            {
-                min = depth;
-                continue;
-            }
-
-            string encoded = string.Join(',', joltages);
-
-            if (visited.TryGetValue(encoded, out int visitedDepth) && visitedDepth >= depth)
-                continue;
-
-            visited[encoded] = depth;
-
-            var buttons = machine.ButtonWiringSchematics
-                .Select(button =>
-                {
-                    int[] pushed = PushButton(joltages, button);
-                    int diff = CalculateJoltageDifference(pushed, machine.JoltageRequirements);
-                    return (pushed, diff);
-                });
-
-            foreach (var (pushed, diff) in buttons)
-                queue.Enqueue((pushed, depth + 1), 100 * diff + depth);
-        }
-
-        return min;
-    }
-
     public string SolvePart1(string input)
     {
         Machine[] machines = [..input.Lines().Select(line =>
@@ -220,6 +152,35 @@ public class Day10 : IDay
             return new Machine(indicators, schematics, requirements);
         })];
 
-        return $"{machines.Sum(Configure2)}";
+        // Arrange ILP
+
+        // Each variable will represent the number of times we push the corresponding button
+        // Objective: Minimize the sum of all variables (total button presses)
+
+        // Constraints:
+        // The counters must equal the required configuration
+        // So we have n constraints given n counters (and n requirements)
+
+
+        return $"{machines.Sum(machine =>
+        {
+            double[] objectiveFunction = new double[machine.ButtonWiringSchematics.Length];
+            for (int i = 0; i < objectiveFunction.Length; i++)
+                objectiveFunction[i] = 1;
+
+            double[][] constraints = new double[machine.JoltageRequirements.Length][];
+            for (int i = 0; i < constraints.Length; i++)
+            {
+                constraints[i] = new double[machine.ButtonWiringSchematics.Length + 1];
+                for (int j = 0; j < machine.ButtonWiringSchematics.Length; j++)
+                    constraints[i][j] = machine.ButtonWiringSchematics[j].Contains(i) ? 1 : 0;
+
+                constraints[i][^1] = machine.JoltageRequirements[i];
+            }
+
+            (int minimum, int[] assignments) = IntegerSimplex.Minimise(objectiveFunction, [], constraints, []);
+
+            return minimum;
+        })}";
     }
 }
