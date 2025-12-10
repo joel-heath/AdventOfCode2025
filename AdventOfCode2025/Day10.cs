@@ -1,40 +1,67 @@
 using AdventOfCode2025.Utilities;
-using System;
-using System.ComponentModel.Design;
 using System.Text.RegularExpressions;
 
 namespace AdventOfCode2025;
 
-public class Machine
+public class Machine(ulong indicatorLightsDiagram, int[][] buttonWiringSchematics, int[] joltageRequirements)
 {
-    public bool[] IndicatorLightsDiagram { get; }
-    public int[][] ButtonWiringSchematics { get; }
-    public int[] JoltageRequirements { get; }
-    public bool[] IndicatorLights { get; private set; }
+    public ulong IndicatorLightsDiagram { get; } = indicatorLightsDiagram;
+    public int[][] ButtonWiringSchematics { get; } = buttonWiringSchematics;
+    public int[] JoltageRequirements { get; } = joltageRequirements;
+    public ulong IndicatorLights { get; private set; } = 0;
 
     public Machine(bool[] indicatorLightsDiagram, int[][] buttonWiringSchematics, int[] joltageRequirements)
+        : this(Encode(indicatorLightsDiagram), buttonWiringSchematics, joltageRequirements) { }
+
+    public Machine ToMachine()
     {
-        IndicatorLightsDiagram = indicatorLightsDiagram;
-        ButtonWiringSchematics = buttonWiringSchematics;
-        JoltageRequirements = joltageRequirements;
-        IndicatorLights = new bool[indicatorLightsDiagram.Length];
+        Machine output = new(IndicatorLightsDiagram, ButtonWiringSchematics, JoltageRequirements)
+            { IndicatorLights = IndicatorLights };
+
+        return output;
     }
 
-    private void Toggle(int light)
-        => IndicatorLights[light] = !IndicatorLights[light];
+    private void ToggleLight(int light)
+        => IndicatorLights ^= (1UL << light);
 
-    public void PushButton(int[] button)
+    public void PushButtonLights(int[] button)
     {
         foreach (int i in button)
-            Toggle(i);
+            ToggleLight(i);
+    }
+
+    public Machine PushButtonLightsOnNewMachine(int[] button)
+    {
+        Machine mach = ToMachine();
+
+        foreach (int i in button)
+            mach.ToggleLight(i);
+
+        return mach;
     }
 
     public bool LightsConfiguredCorrectly()
-        => Enumerable.SequenceEqual(IndicatorLights, IndicatorLightsDiagram);
+        => IndicatorLights == IndicatorLightsDiagram;
 
-    public int CountCorrectlyConfiguredLights()
-        => IndicatorLights.Zip(IndicatorLightsDiagram)
-                          .Count(x => x.First == x.Second);
+    public int CountIncorrectlyConfiguredLights()
+    {
+        ulong diff = IndicatorLights ^ IndicatorLightsDiagram;
+        int different = System.Numerics.BitOperations.PopCount(diff);
+        return different;
+    }
+
+    private static ulong Encode(bool[] bits)
+    {
+        ulong value = 0;
+
+        for (int i = 0; i < bits.Length; i++)
+        {
+            if (bits[i])
+                value |= 1UL << i;
+        }
+
+        return value;
+    }
 }
 
 public class Day10 : IDay
@@ -49,91 +76,35 @@ public class Day10 : IDay
         { "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}\r\n[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}\r\n[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}", "33" }
     };
 
-    private static ulong Encode(bool[] bits)
-    {
-        ulong value = 0;
-
-        for (int i = 0; i < bits.Length; i++)
-        {
-            if (bits[i])
-                value |= 1UL << i;
-        }
-
-        return value;
-    }
-
-    private static bool[] Decode(ulong value, int length)
-    {
-        bool[] bits = new bool[length];
-
-        for (int i = 0; i < length; i++)
-            bits[i] = (value & (1UL << i)) != 0;
-
-        return bits;
-    }
-
-    private static ulong Toggle(ulong indicatorLights, int light)
-        => indicatorLights ^ (1UL << light);
-
-    private static ulong PushButton(ulong indicatorLights, int[] button)
-    {
-        foreach (int i in button)
-            indicatorLights = Toggle(indicatorLights, i);
-
-        return indicatorLights;
-    }
-
-    private static bool LightsConfiguredCorrectly(ulong indicatorLights, ulong correct)
-        => indicatorLights == correct;
-
-    private static int CountIncorrectlyConfiguredLights(ulong indicatorLights, ulong correct)
-    {
-        ulong diff = indicatorLights ^ correct;
-        int different = System.Numerics.BitOperations.PopCount(diff);
-        return different;
-    }
-
-    private static int SafeIncrement(int value)
-        => value == int.MaxValue ? int.MaxValue : value + 1;
-
     private static int Configure(Machine machine)
     {
-        Queue<(ulong, int)> queue = [];
+        Queue<(Machine, int)> queue = [];
         Dictionary<ulong, int> visited = [];
 
-        ulong correctIndicatorLights = Encode(machine.IndicatorLightsDiagram);
+        ulong correctIndicatorLights = machine.IndicatorLightsDiagram;
 
-        queue.Enqueue((Encode(machine.IndicatorLights), 0));
+        queue.Enqueue((machine, 0));
 
         int min = int.MaxValue;
         while (queue.TryDequeue(out var data))
         {
-            (ulong indicatorLights, int depth) = data;
+            (Machine mach, int depth) = data;
 
             if (depth >= min)
                 continue;
 
-            if (LightsConfiguredCorrectly(indicatorLights, correctIndicatorLights))
+            if (mach.LightsConfiguredCorrectly())
             {
                 min = depth;
                 continue;
             }
 
-            if (visited.TryGetValue(indicatorLights, out int visitedDepth) && visitedDepth >= depth)
+            if (visited.TryGetValue(mach.IndicatorLights, out int visitedDepth) && visitedDepth >= depth)
                 continue;
 
-            visited[indicatorLights] = depth;
+            visited[mach.IndicatorLights] = depth;
 
-            var buttons = machine.ButtonWiringSchematics
-                .Select(button =>
-                {
-                    ulong pushed = PushButton(indicatorLights, button);
-                    int count = CountIncorrectlyConfiguredLights(pushed, correctIndicatorLights);
-                    return (pushed, count);
-                })
-                .OrderBy(button => button.count);
-
-            foreach (var (pushed, count) in buttons)
+            foreach (var pushed in machine.ButtonWiringSchematics.Select(mach.PushButtonLightsOnNewMachine))
                 queue.Enqueue((pushed, depth + 1));
         }
 
@@ -165,13 +136,15 @@ public class Day10 : IDay
 
     private static int Configure2(Machine machine)
     {
-        Queue<(int[], int)> queue = [];
+        Console.WriteLine("configuring new machine");
+
+        PriorityQueue<(int[], int), int> queue = new();
         Dictionary<string, int> visited = [];
 
-        queue.Enqueue((new int[machine.JoltageRequirements.Length], 0));
+        queue.Enqueue((new int[machine.JoltageRequirements.Length], 0), 0);
 
         int min = int.MaxValue;
-        while (queue.TryDequeue(out var data))
+        while (queue.TryDequeue(out var data, out _))
         {
             (int[] joltages, int depth) = data;
 
@@ -197,11 +170,10 @@ public class Day10 : IDay
                     int[] pushed = PushButton(joltages, button);
                     int diff = CalculateJoltageDifference(pushed, machine.JoltageRequirements);
                     return (pushed, diff);
-                })
-                .OrderBy(button => button.diff);
+                });
 
-            foreach (var (pushed, _) in buttons)
-                queue.Enqueue((pushed, depth + 1));
+            foreach (var (pushed, diff) in buttons)
+                queue.Enqueue((pushed, depth + 1), 100 * diff + depth);
         }
 
         return min;
