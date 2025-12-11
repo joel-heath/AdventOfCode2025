@@ -1,5 +1,4 @@
 using AdventOfCode2025.Utilities;
-using System.Text.RegularExpressions;
 
 namespace AdventOfCode2025;
 
@@ -15,9 +14,9 @@ public class Day11 : IDay
         { "svr: aaa bbb\r\naaa: fft\r\nfft: ccc\r\nbbb: tty\r\ntty: ccc\r\nccc: ddd eee\r\nddd: hub\r\nhub: fff\r\neee: dac\r\ndac: fff\r\nfff: ggg hhh\r\nggg: out\r\nhhh: out", "2" },
     };
 
-    private readonly Dictionary<(int curr, int end), long> memo = [];
+    private static readonly Dictionary<(int curr, int end), long> memo = [];
 
-    private long CountAllPaths(List<(string name, Dictionary<int, int> edges)> graph, int currentIndex, int endIndex)
+    private static long CountAllPaths(List<(string name, Dictionary<int, int> edges)> graph, int currentIndex, int endIndex)
     {
         if (currentIndex == endIndex)
             return 1;
@@ -33,7 +32,7 @@ public class Day11 : IDay
         return memo[(currentIndex, endIndex)] = paths;
     }
 
-    private (List<(string name, Dictionary<int, int> edges)> graph, Dictionary<string, int> nameToIndexMap) ParseInput(string input)
+    private static (List<(string name, Dictionary<int, int> edges)> graph, Dictionary<string, int> nameToIndexMap) ParseInput(string input)
         =>  Utils.GenerateGraph(
                 input.Lines()
                 .Select(line => line.Split(": "))

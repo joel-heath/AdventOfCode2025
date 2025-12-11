@@ -4,7 +4,6 @@ using Highs;
 
 namespace AdventOfCode2025;
 
-
 public class Machine(ulong indicatorLightsDiagram, int[][] buttonWiringSchematics, int[] joltageRequirements)
 {
     public ulong IndicatorLightsDiagram { get; } = indicatorLightsDiagram;
@@ -16,15 +15,10 @@ public class Machine(ulong indicatorLightsDiagram, int[][] buttonWiringSchematic
         : this(Encode(indicatorLightsDiagram), buttonWiringSchematics, joltageRequirements) { }
 
     public Machine ToMachine()
-    {
-        Machine output = new(IndicatorLightsDiagram, ButtonWiringSchematics, JoltageRequirements)
-            { IndicatorLights = IndicatorLights };
-
-        return output;
-    }
+        => new(IndicatorLightsDiagram, ButtonWiringSchematics, JoltageRequirements) { IndicatorLights = IndicatorLights };
 
     private void ToggleLight(int light)
-        => IndicatorLights ^= (1UL << light);
+        => IndicatorLights ^= 1UL << light;
 
     public void PushButtonLights(int[] button)
     {
@@ -66,7 +60,7 @@ public class Machine(ulong indicatorLightsDiagram, int[][] buttonWiringSchematic
     }
 }
 
-public class Day10 : IDay
+public partial class Day10 : IDay
 {
     public int Day => 10;
     public Dictionary<string, string> UnitTestsP1 { get; } = new() 
@@ -114,76 +108,38 @@ public class Day10 : IDay
     }
 
     public string SolvePart1(string input)
-    {
-        Machine[] machines = [..input.Lines().Select(line =>
-        {
-            bool[] indicators = [..Regex.Match(line, @"\[([.#]+)\]")
-                .Groups.Values.ElementAt(1).Value
-                .Select(l => l == '#')];
+        => $"{Parse(input).Sum(Configure)}";
 
-            int[][] schematics = [..Regex.Matches(line, @"\((\d+(,\d+)*)\)")
+    private static IEnumerable<Machine> Parse(string input)
+        => input.Lines().Select(line => new Machine(
+            [..LightDiagramPattern().Match(line)
+                .Groups.Values.ElementAt(1).Value
+                .Select(l => l == '#')],
+            [..ButtonSchematicPattern().Matches(line)
                 .Select(match => match.Groups.Values.ElementAt(1).Value)
-                .Select(thing => thing.Split(',').Select(int.Parse).ToArray())];
-
-            int[] requirements = [..Regex.Match(line, @"\{(\d+(,\d+)*)\}")
+                .Select(counters => counters.Split(',').Select(int.Parse).ToArray())],
+            [..JoltageRequirementsPattern().Match(line)
                 .Groups.Values.ElementAt(1).Value
-                .Split(',').Select(int.Parse)];
+                .Split(',').Select(int.Parse)]));
 
-            return new Machine(indicators, schematics, requirements);
-        })];
+    // ILP arrangement: 
 
-        return $"{machines.Sum(Configure)}";
-    }
+    // Each variable will represent the number of times we push the corresponding button
+    // Objective: Minimize the sum of all variables (total button presses)
 
+    // Constraints:
+    // The counters must equal the required configuration
+    // So we have n constraints given n counters (and n requirements)
     public string SolvePart2(string input)
-    {
-        Machine[] machines = [..input.Lines().Select(line =>
-        {
-            bool[] indicators = [..Regex.Match(line, @"\[([.#]+)\]")
-                .Groups.Values.ElementAt(1).Value
-                .Select(l => l == '#')];
+        => $"{Parse(input).Sum(machine => Solve(
+            [.. Enumerable.Repeat(1, machine.ButtonWiringSchematics.Length)],
+            [..machine.JoltageRequirements
+                .Select((counter, i) =>
+                    machine.ButtonWiringSchematics
+                        .Select(b => b.Contains(i) ? 1.0 : 0.0)
+                        .Append(counter)
+                        .ToArray())]))}";
 
-            int[][] schematics = [..Regex.Matches(line, @"\((\d+(,\d+)*)\)")
-                .Select(match => match.Groups.Values.ElementAt(1).Value)
-                .Select(thing => thing.Split(',').Select(int.Parse).ToArray())];
-
-            int[] requirements = [..Regex.Match(line, @"\{(\d+(,\d+)*)\}")
-                .Groups.Values.ElementAt(1).Value
-                .Split(',').Select(int.Parse)];
-
-            return new Machine(indicators, schematics, requirements);
-        })];
-
-        // Arrange ILP
-
-        // Each variable will represent the number of times we push the corresponding button
-        // Objective: Minimize the sum of all variables (total button presses)
-
-        // Constraints:
-        // The counters must equal the required configuration
-        // So we have n constraints given n counters (and n requirements)
-
-        return $"{machines.Sum(machine =>
-        {
-            int variables = machine.ButtonWiringSchematics.Length;
-
-            double[] objectiveFunction = new double[variables];
-            for (int i = 0; i < objectiveFunction.Length; i++)
-                objectiveFunction[i] = 1;
-
-            double[][] constraints = new double[machine.JoltageRequirements.Length][];
-            for (int i = 0; i < constraints.Length; i++)
-            {
-                constraints[i] = new double[machine.ButtonWiringSchematics.Length + 1];
-                for (int j = 0; j < machine.ButtonWiringSchematics.Length; j++)
-                    constraints[i][j] = machine.ButtonWiringSchematics[j].Contains(i) ? 1 : 0;
-
-                constraints[i][^1] = machine.JoltageRequirements[i];
-            }
-
-            return Solve(objectiveFunction, constraints);
-        })}";
-    }
 
     // AI generated function below:
     // HiGHS has some GOOFY API
@@ -265,4 +221,11 @@ public class Day10 : IDay
 
         return (int)Math.Round(solver.getInfo().ObjectiveValue);
     }
+
+    [GeneratedRegex(@"\[([.#]+)\]")]
+    private static partial Regex LightDiagramPattern();
+    [GeneratedRegex(@"\((\d+(,\d+)*)\)")]
+    private static partial Regex ButtonSchematicPattern();
+    [GeneratedRegex(@"\{(\d+(,\d+)*)\}")]
+    private static partial Regex JoltageRequirementsPattern();
 }
