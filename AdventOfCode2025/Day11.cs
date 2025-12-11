@@ -15,7 +15,7 @@ public class Day11 : IDay
         { "svr: aaa bbb\r\naaa: fft\r\nfft: ccc\r\nbbb: tty\r\ntty: ccc\r\nccc: ddd eee\r\nddd: hub\r\nhub: fff\r\neee: dac\r\ndac: fff\r\nfff: ggg hhh\r\nggg: out\r\nhhh: out", "2" },
     };
 
-    private Dictionary<(int curr, int end), long> memo = [];
+    private readonly Dictionary<(int curr, int end), long> memo = [];
 
     private long CountAllPaths(List<(string name, Dictionary<int, int> edges)> graph, int currentIndex, int endIndex)
     {
@@ -33,40 +33,31 @@ public class Day11 : IDay
         return memo[(currentIndex, endIndex)] = paths;
     }
 
+    private (List<(string name, Dictionary<int, int> edges)> graph, Dictionary<string, int> nameToIndexMap) ParseInput(string input)
+        =>  Utils.GenerateGraph(
+                input.Lines()
+                .Select(line => line.Split(": "))
+                .Select(parts => (source: parts[0], destinations: parts[1].Split(' ')))
+                .SelectMany(parts => parts.destinations.Select(d => (parts.source, destination: d, weight: 1))),
+            directed: true);
+
     public string SolvePart1(string input)
     {
-        var lines = input.Lines()
-            .Select(line => line.Split(": "))
-            .Select(parts => (source: parts[0], destinations: parts[1].Split(' ')))
-            .SelectMany(parts => parts.destinations.Select(d => (parts.source, destination: d, weight: 1)));
+        var (graph, nameToIndexMap) = ParseInput(input);
 
-        (List<(string name, Dictionary<int, int> edges)> graph, Dictionary<string, int> nameToIndexMap) = Utils.GenerateGraph(lines, directed: true);
-
-        int startIndex = nameToIndexMap["you"];
-        int endIndex = nameToIndexMap["out"];
-
-        return $"{CountAllPaths(graph, startIndex, endIndex)}";
+        return $"{CountAllPaths(graph, nameToIndexMap["you"], nameToIndexMap["out"])}";
     }
 
     public string SolvePart2(string input)
     {
-        var lines = input.Lines()
-            .Select(line => line.Split(": "))
-            .Select(parts => (source: parts[0], destinations: parts[1].Split(' ')))
-            .SelectMany(parts => parts.destinations.Select(d => (parts.source, destination: d, weight: 1)));
+        var (graph, nameToIndexMap) = ParseInput(input);
 
-        (List<(string name, Dictionary<int, int> edges)> graph, Dictionary<string, int> nameToIndexMap) = Utils.GenerateGraph(lines, directed: true);
+        return $"{CountAllPaths(graph, nameToIndexMap["svr"], nameToIndexMap["fft"])
+                * CountAllPaths(graph, nameToIndexMap["fft"], nameToIndexMap["dac"])
+                * CountAllPaths(graph, nameToIndexMap["dac"], nameToIndexMap["out"])
 
-        long total =
-              CountAllPaths(graph, nameToIndexMap["svr"], nameToIndexMap["fft"])
-            * CountAllPaths(graph, nameToIndexMap["fft"], nameToIndexMap["dac"])
-            * CountAllPaths(graph, nameToIndexMap["dac"], nameToIndexMap["out"])
-            +
-              CountAllPaths(graph, nameToIndexMap["svr"], nameToIndexMap["dac"])
-            * CountAllPaths(graph, nameToIndexMap["dac"], nameToIndexMap["fft"])
-            * CountAllPaths(graph, nameToIndexMap["fft"], nameToIndexMap["out"]);
-
-
-        return $"{total}";
+                + CountAllPaths(graph, nameToIndexMap["svr"], nameToIndexMap["dac"])
+                * CountAllPaths(graph, nameToIndexMap["dac"], nameToIndexMap["fft"])
+                * CountAllPaths(graph, nameToIndexMap["fft"], nameToIndexMap["out"])}";
     }
 }
