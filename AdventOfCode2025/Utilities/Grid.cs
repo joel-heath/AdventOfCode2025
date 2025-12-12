@@ -235,6 +235,21 @@ public class Grid<T>(int x, int y)
 
     public Grid<T> ToGrid()
         => new(points, transpose: false);
+
+    public T[][] ToJaggedArray()
+    {
+        T[][] array = new T[Height][];
+        for (int y = 0; y < Height; y++)
+        {
+            T[] row = new T[Width];
+            for (int x = 0; x < Width; x++)
+            {
+                row[x] = points[x, y];
+            }
+            array[y] = row;
+        }
+        return array;
+    }
 }
 
 public struct Point(long x, long y)

@@ -5,6 +5,153 @@ namespace AdventOfCode2025;
 using Present = string[];
 using Region = (int Width, int Height, int[] Presents);
 
+// you could use an array for length generalisation but creating new arrays is slow
+public readonly record struct MemoKey
+{
+    private readonly string grid;
+    private readonly int r0, r1, r2, r3, r4;
+
+    private MemoKey(string grid, int r0, int r1, int r2, int r3, int r4)
+    {
+        this.grid = grid;
+        this.r0 = r0;
+        this.r1 = r1;
+        this.r2 = r2;
+        this.r3 = r3;
+        this.r4 = r4;
+    }
+
+    public MemoKey(char[][] grid, int[] requirements)
+        : this(CanonicalKey(grid), requirements[0], requirements[1], requirements[2], requirements[3], requirements[4]) { }
+
+    public bool Equals(MemoKey other)
+        => StringComparer.Ordinal.Equals(grid, other.grid)
+              && r0 == other.r0
+              && r1 == other.r1
+              && r2 == other.r2
+              && r3 == other.r3
+              && r4 == other.r4;
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(StringComparer.Ordinal.GetHashCode(grid));
+        hash.Add(r0);
+        hash.Add(r1);
+        hash.Add(r2);
+        hash.Add(r3);
+        hash.Add(r4);
+        return hash.ToHashCode();
+    }
+
+    private static string CanonicalKey(char[][] g)
+    {
+        string canonical = Serialise0(g);
+
+        string s90 = Serialise90(g);
+        if (string.CompareOrdinal(s90, canonical) < 0) canonical = s90;
+
+        string s180 = Serialise180(g);
+        if (string.CompareOrdinal(s180, canonical) < 0) canonical = s180;
+
+        string s270 = Serialise270(g);
+        if (string.CompareOrdinal(s270, canonical) < 0) canonical = s270;
+
+        return canonical;
+    }
+
+    private static string Serialise0(char[][] g)
+    {
+        int h = g.Length;
+        int w = g[0].Length;
+        int len = (w + 1) * h - 1;  // lines joined by '\n', no trailing newline
+
+        return string.Create(len, g, static (span, grid) =>
+        {
+            int pos = 0;
+            for (int y = 0; y < grid.Length; y++)
+            {
+                var row = grid[y];
+                row.AsSpan().CopyTo(span[pos..]);
+                pos += row.Length;
+                if (y != grid.Length - 1)
+                    span[pos++] = '\n';
+            }
+        });
+    }
+
+    private static string Serialise90(char[][] g)
+    {
+        int h = g.Length;
+        int w = g[0].Length;
+        int len = (h + 1) * w - 1;
+
+        return string.Create(len, g, static (span, grid) =>
+        {
+            int h = grid.Length;
+            int w = grid[0].Length;
+            int pos = 0;
+
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = h - 1; y >= 0; y--)
+                    span[pos++] = grid[y][x];
+
+                if (x != w - 1)
+                    span[pos++] = '\n';
+            }
+        });
+    }
+
+    private static string Serialise180(char[][] g)
+    {
+        int h = g.Length;
+        int w = g[0].Length;
+        int len = (w + 1) * h - 1;
+
+        return string.Create(len, g, static (span, grid) =>
+        {
+            int h = grid.Length;
+            int w = grid[0].Length;
+            int pos = 0;
+
+            for (int y = h - 1; y >= 0; y--)
+            {
+                var row = grid[y];
+                for (int x = w - 1; x >= 0; x--)
+                    span[pos++] = row[x];
+
+                if (y != 0)
+                    span[pos++] = '\n';
+            }
+        });
+    }
+
+    private static string Serialise270(char[][] g)
+    {
+        int h = g.Length;
+        int w = g[0].Length;
+        int len = (h + 1) * w - 1;
+
+        return string.Create(len, g, static (span, grid) =>
+        {
+            int h = grid.Length;
+            int w = grid[0].Length;
+            int pos = 0;
+
+            for (int x = w - 1; x >= 0; x--)
+            {
+                for (int y = 0; y < h; y++)
+                    span[pos++] = grid[y][x];
+
+                if (x != 0)
+                    span[pos++] = '\n';
+            }
+        });
+    }
+}
+
+
 public class Day12 : IDay
 {
     public int Day => 12;
@@ -32,12 +179,19 @@ public class Day12 : IDay
         return (presents, regions);
     }
 
+    private static Dictionary<MemoKey, bool> memo = [];
+
     private static bool PresentsFit(Present[] presents, Grid<char> grid, int[] requirements)
     {
         int nextRequirement = Array.FindIndex(requirements, r => r > 0);
 
         if (nextRequirement == -1)
             return true;
+
+        MemoKey key = new(grid.ToJaggedArray(), requirements);
+
+        if (memo.TryGetValue(key, out bool result))
+            return result;
 
         Present present = presents[nextRequirement];
         int pWidth = present[0].Length;
@@ -54,7 +208,7 @@ public class Day12 : IDay
                     requirements[nextRequirement]--;
 
                     if (PresentsFit(presents, grid, requirements))
-                        return true;
+                        return memo[key] = true;
 
                     requirements[nextRequirement]++;
                     PlacePresent(grid, present, pWidth, pHeight, y, x, orientation, unplace: true);
@@ -62,7 +216,7 @@ public class Day12 : IDay
             }
         }
 
-        return false;
+        return memo[key] = false;
     }
 
     private static void PlacePresent(Grid<char> grid, string[] present, int pWidth, int pHeight, int y, int x, int orientation, bool unplace = false)
@@ -128,7 +282,21 @@ public class Day12 : IDay
         (Present[] presents, Region[] regions) = Parse(input);
 
         return $"{regions.Count(r =>
-            PresentsFit(presents, new(r.Width, r.Height, Enumerable.Repeat('.', r.Width * r.Height)), r.Presents))}";
+        {
+            memo = [];
+            foreach (var (present, index) in presents.Select((p, i) => (p, i)))
+            {
+                int pArea = present.SelectMany(l => l).Count(c => c == '#');
+                int reqCount = r.Presents[index];
+
+                if (pArea * reqCount > r.Width * r.Height)
+                {
+                    Console.WriteLine("THE BOUND CHECK DID SOMETHING OH MY GOODNESS");
+                    return false;
+                }
+            }
+            return PresentsFit(presents, new(r.Width, r.Height, Enumerable.Repeat('.', r.Width * r.Height)), r.Presents);
+        })}";
     }
 
     public string SolvePart2(string input)
