@@ -375,24 +375,21 @@ public class Day12 : IDay
     {
         (Present[] presents, Region[] regions) = Parse(input);
 
+        int[] areas = [.. presents.Select(p => p.SelectMany(l => l).Count(c => c == '#'))];
+
         return $"{regions.Count(r =>
         {
             memo = [];
-            foreach (var (present, index) in presents.Select((p, i) => (p, i)))
-            {
-                int pArea = present.SelectMany(l => l).Count(c => c == '#');
-                int reqCount = r.Presents[index];
 
-                if (pArea * reqCount > r.Width * r.Height)
-                {
-                    Console.WriteLine("THE BOUND CHECK DID SOMETHING OH MY GOODNESS");
-                    return false;
-                }
-            }
+            int area = r.Width * r.Height;
+            int requiredArea = r.Presents.Select((p, i) => p * areas[i]).Sum();
 
-            return PresentsFit(
-                [..presents.Select(p => GetAllOrientations(p))],
-                new(r.Width, r.Height, Enumerable.Repeat('.', r.Width * r.Height)), r.Presents);
+            // Console.WriteLine($"Region {r.Width}x{r.Height} requires {requiredArea} of {area} area.");
+
+            if (requiredArea > area)
+                return false;
+
+            return false;
         })}";
     }
 
